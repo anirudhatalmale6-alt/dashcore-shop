@@ -158,11 +158,40 @@ model SiteSettings {
   // Tax
   vatRate              Decimal @default(0) @map("vat_rate") @db.Decimal(5, 2)
 
-  // SEO
+  // SEO - General
   metaTitle            String  @default("") @map("meta_title") @db.VarChar(255)
   metaDescription      String  @default("") @map("meta_description") @db.Text
   metaKeywords         String  @default("") @map("meta_keywords") @db.Text
+  faviconUrl           String  @default("") @map("favicon_url") @db.VarChar(500)
+
+  // SEO - Open Graph (Facebook)
+  ogTitle              String  @default("") @map("og_title") @db.VarChar(255)
+  ogDescription        String  @default("") @map("og_description") @db.Text
   ogImageUrl           String  @default("") @map("og_image_url") @db.VarChar(500)
 
+  // SEO - Twitter Card
+  twitterTitle         String  @default("") @map("twitter_title") @db.VarChar(255)
+  twitterDescription   String  @default("") @map("twitter_description") @db.Text
+  twitterImageUrl      String  @default("") @map("twitter_image_url") @db.VarChar(500)
+
   @@map("site_settings")
+}
+
+// ---------------------------------------------------------------------------
+// ContactMessage
+// ---------------------------------------------------------------------------
+model ContactMessage {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  email      String   @db.VarChar(255)
+  department String   @db.VarChar(100)
+  subject    String   @db.VarChar(500)
+  message    String   @db.Text
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([read])
+  @@index([department])
+  @@index([createdAt])
+  @@map("contact_messages")
 }

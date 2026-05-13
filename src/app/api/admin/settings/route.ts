@@ -68,7 +68,13 @@ export async function PUT(request: NextRequest) {
       "metaTitle",
       "metaDescription",
       "metaKeywords",
+      "faviconUrl",
+      "ogTitle",
+      "ogDescription",
       "ogImageUrl",
+      "twitterTitle",
+      "twitterDescription",
+      "twitterImageUrl",
     ];
 
     const updateData: Record<string, unknown> = {};

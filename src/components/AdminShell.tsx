@@ -10,12 +10,14 @@ import {
   Settings,
   LogOut,
   Search,
+  MessageSquare,
 } from "lucide-react";
 
 const navItems = [
   { key: "dashboard", label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { key: "products", label: "Products", href: "/admin/products", icon: Package },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+  { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
   { key: "seo", label: "SEO", href: "/admin/seo", icon: Search },
 ];
