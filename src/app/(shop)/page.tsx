@@ -229,9 +229,9 @@ export default function HomePage() {
                       )}
                     </div>
                     <p className="text-sm text-[#6b7280] leading-relaxed mb-5 line-clamp-3">{product.description}</p>
-                    {product.features && product.features.length > 0 && (
+                    {product.features && (
                       <ul className="space-y-2.5 mb-6">
-                        {(product.features as string[]).slice(0, 5).map((f) => (
+                        {(typeof product.features === "string" ? JSON.parse(product.features) : product.features).slice(0, 5).map((f: string) => (
                           <li key={f} className="flex items-center gap-2.5 text-sm text-[#111827] border-b border-[#e5e7eb] pb-2.5">
                             <CheckCircle2 className="h-4 w-4 shrink-0 text-[#10b981]" />
                             {f}
