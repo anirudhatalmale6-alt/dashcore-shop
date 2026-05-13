@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Layers, Binary, Globe, LayoutDashboard, Users, Code2, ShieldCheck, Activity,
-  Server, Radio, Lock, ArrowRight, CheckCircle2, Zap, Wifi, Shield, Cpu, Eye,
+  Layers, ShieldCheck, Activity,
+  Server, Radio, ArrowRight, CheckCircle2, Zap, Wifi, Shield, Cpu, Eye, Users,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 interface HomeSettings {
@@ -23,6 +24,13 @@ interface Product {
   featured: boolean;
   features: string[];
   tiers: { id: number; name: string; price: number; period: string }[];
+}
+
+interface SliderImg {
+  id: number;
+  title: string;
+  imageUrl: string;
+  linkUrl: string;
 }
 
 const features = [
@@ -55,16 +63,11 @@ const protocols = [
   { icon: Eye, label: "TV Archive & Timeshift" },
 ];
 
-const stats = [
-  { value: "99.9%", label: "Uptime" },
-  { value: "50+", label: "Protocols" },
-  { value: "1M+", label: "Max Connections" },
-  { value: "<10ms", label: "Response Time" },
-];
-
 export default function HomePage() {
   const [settings, setSettings] = useState<HomeSettings | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [sliderImages, setSliderImages] = useState<SliderImg[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -75,7 +78,19 @@ export default function HomePage() {
       .then((r) => r.json())
       .then((d) => setProducts(d || []))
       .catch(() => {});
+    fetch("/api/slider")
+      .then((r) => r.json())
+      .then((d) => setSliderImages(d || []))
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (sliderImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [sliderImages.length]);
 
   return (
     <div>
@@ -165,19 +180,61 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Stats Section ────────────────────── */}
-      <section className="stats-section">
-        <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <span className="stat-number block">{s.value}</span>
-                <span className="text-lg opacity-90">{s.label}</span>
-              </div>
-            ))}
+      {/* ── Image Slider ────────────────────── */}
+      {sliderImages.length > 0 && (
+        <section className="py-10 sm:py-16">
+          <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
+            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-[#e5e7eb]" style={{ aspectRatio: "16/6" }}>
+              {sliderImages.map((img, idx) => (
+                <div
+                  key={img.id}
+                  className="absolute inset-0 transition-opacity duration-700"
+                  style={{ opacity: idx === currentSlide ? 1 : 0 }}
+                >
+                  {img.linkUrl ? (
+                    <a href={img.linkUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                      <img src={img.imageUrl} alt={img.title} className="w-full h-full object-cover" />
+                    </a>
+                  ) : (
+                    <img src={img.imageUrl} alt={img.title} className="w-full h-full object-cover" />
+                  )}
+                  {img.title && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                      <p className="text-white font-semibold text-lg">{img.title}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {sliderImages.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev - 1 + sliderImages.length) % sliderImages.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors shadow-md z-10"
+                  >
+                    <ChevronLeft className="h-5 w-5 text-[#111827]" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev + 1) % sliderImages.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors shadow-md z-10"
+                  >
+                    <ChevronRight className="h-5 w-5 text-[#111827]" />
+                  </button>
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                    {sliderImages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSlide(idx)}
+                        className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentSlide ? "bg-white w-6" : "bg-white/50"}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Protocol Coverage ────────────────── */}
       <section className="py-20 sm:py-28">

@@ -233,6 +233,22 @@ model CmsPage {
 }
 
 // ---------------------------------------------------------------------------
+// SliderImage  (homepage rotating image slider)
+// ---------------------------------------------------------------------------
+model SliderImage {
+  id        Int      @id @default(autoincrement())
+  title     String   @default("") @db.VarChar(255)
+  imageUrl  String   @map("image_url") @db.VarChar(500)
+  linkUrl   String   @default("") @map("link_url") @db.VarChar(500)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([active, sortOrder])
+  @@map("slider_images")
+}
+
+// ---------------------------------------------------------------------------
 // ContactMessage
 // ---------------------------------------------------------------------------
 model ContactMessage {

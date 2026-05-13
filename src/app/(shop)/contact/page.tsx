@@ -50,10 +50,9 @@ export default function ContactPage() {
 
   if (success) {
     return (
-      <div className="hero-light relative min-h-[80vh] flex items-center justify-center">
-        <div className="hero-pattern" />
-        <div className="relative z-10 max-w-md mx-auto px-5 text-center">
-          <div className="bg-white rounded-2xl border border-[#e2e8f0] p-10 shadow-sm">
+      <div className="min-h-[80vh] flex items-center justify-center pt-20">
+        <div className="max-w-md mx-auto px-5 text-center">
+          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-10 shadow-sm">
             <div className="flex justify-center mb-5">
               <div className="h-16 w-16 rounded-full bg-emerald-50 flex items-center justify-center">
                 <CheckCircle className="h-8 w-8 text-emerald-600" />
@@ -71,27 +70,24 @@ export default function ContactPage() {
 
   return (
     <div>
-      <section className="hero-light relative pt-28 pb-14 sm:pt-36 sm:pb-18">
-        <div className="hero-pattern" />
-        <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#7c3aed]/8 border border-[#7c3aed]/15 px-4 py-1.5 mb-5">
-            <Mail className="h-3.5 w-3.5 text-[#7c3aed]" />
-            <span className="text-xs font-semibold text-[#7c3aed] tracking-wide uppercase">
-              Get in Touch
-            </span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0f172a]">
-            Contact Us
-          </h1>
-          <p className="mx-auto mt-3 max-w-xl text-base text-[#64748b] leading-relaxed">
-            Have a question or need help? Select a department and send us a message.
-          </p>
-        </div>
-      </section>
-
-      <section className="pb-16 sm:pb-24 -mt-4 relative z-10">
+      <section className="pt-28 pb-16 sm:pt-36 sm:pb-24">
         <div className="mx-auto max-w-xl px-5 sm:px-6">
-          <div className="bg-white rounded-2xl border border-[#e2e8f0] p-7 sm:p-8 shadow-sm">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/15 px-4 py-1.5 mb-5">
+              <Mail className="h-3.5 w-3.5 text-[#6366f1]" />
+              <span className="text-xs font-semibold text-[#6366f1] tracking-wide uppercase">
+                Get in Touch
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#111827]">
+              Contact Us
+            </h1>
+            <p className="mx-auto mt-3 max-w-md text-sm text-[#6b7280] leading-relaxed">
+              Have a question or need help? Select a department and send us a message.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-7 sm:p-8 shadow-sm">
             {error && (
               <div className="mb-5 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
                 {error}

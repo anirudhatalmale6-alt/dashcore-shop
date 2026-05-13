@@ -13,6 +13,7 @@ import {
   MessageSquare,
   CreditCard,
   FileText,
+  Images,
 } from "lucide-react";
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare },
   { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText },
+  { key: "slider", label: "Slider", href: "/admin/slider", icon: Images },
   { key: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
   { key: "seo", label: "SEO", href: "/admin/seo", icon: Search },
