@@ -43,21 +43,18 @@ export default function Navbar() {
     <header className={`fixed top-0 left-0 right-0 z-50 navbar-glass ${scrolled ? "scrolled" : ""}`}>
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] text-white font-bold text-sm transition-transform group-hover:scale-105">
-              D
-            </div>
-            <span className="text-base font-bold tracking-tight text-[#0f172a]">
-              Dash<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] to-[#06b6d4]">Core</span>
+          <Link href="/" className="flex items-center gap-2.5 group" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            <span className="text-xl font-bold text-[#6366f1]">
+              DashCore
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-7">
+          <nav className="hidden md:flex items-center gap-6">
             {allLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition-colors"
+                className="relative text-sm font-medium text-[#111827] hover:text-[#6366f1] transition-colors py-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:w-0 after:h-0.5 after:bg-[#6366f1] after:transition-all after:-translate-x-1/2 hover:after:w-[70%]"
               >
                 {link.label}
               </Link>
@@ -67,19 +64,19 @@ export default function Navbar() {
               href="https://t.me/dashcore"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#64748b] hover:text-[#7c3aed] transition-colors"
+              className="text-[#6b7280] hover:text-[#6366f1] transition-colors"
               aria-label="Telegram"
             >
               <Send className="h-4 w-4" />
             </a>
 
-            <Link href="/pricing" className="text-sm font-bold px-5 py-2 rounded-lg bg-[#7c3aed] text-white hover:bg-[#6d28d9] shadow-sm transition-all">
-              Renew License
+            <Link href="/pricing" className="btn-primary text-sm !py-2.5 !px-6">
+              Get Started
             </Link>
           </nav>
 
           <button
-            className="md:hidden text-[#64748b] hover:text-[#0f172a] transition-colors"
+            className="md:hidden text-[#6b7280] hover:text-[#111827] transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -89,14 +86,14 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-[#e2e8f0]">
+        <div className="md:hidden bg-white border-t border-[#e5e7eb]">
           <div className="px-5 py-4 space-y-3">
             {allLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block text-sm text-[#64748b] font-medium hover:text-[#0f172a] py-2"
+                className="block text-sm text-[#111827] font-medium hover:text-[#6366f1] py-2"
               >
                 {link.label}
               </Link>
@@ -104,9 +101,9 @@ export default function Navbar() {
             <Link
               href="/pricing"
               onClick={() => setMobileOpen(false)}
-              className="btn-primary inline-block text-sm px-5 py-2 mt-2"
+              className="btn-primary inline-block text-sm !px-6 !py-2.5 mt-2"
             >
-              Renew License
+              Get Started
             </Link>
           </div>
         </div>
