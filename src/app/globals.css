@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #0a0a14;
+  --color-foreground: #ffffff;
+  --color-primary: #7c68a6;
+  --color-primary-light: #9b8cc4;
+  --color-primary-dark: #5a4a7a;
+  --color-surface: rgba(124, 104, 166, 0.06);
+  --color-surface-border: rgba(124, 104, 166, 0.15);
+  --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ── Base ───────────────────────────────────────── */
+body {
+  background: #0a0a14;
+  color: #ffffff;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* ── Gradient text utility ──────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #9b8cc4 0%, #6b8dd6 50%, #7c68a6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glassmorphism card ─────────────────────────── */
+.glass-card {
+  background: rgba(124, 104, 166, 0.06);
+  border: 1px solid rgba(124, 104, 166, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(124, 104, 166, 0.1);
+  border-color: rgba(124, 104, 166, 0.3);
+  box-shadow: 0 0 30px rgba(124, 104, 166, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ── Purple glow effect ─────────────────────────── */
+.glow-purple {
+  box-shadow: 0 0 40px rgba(124, 104, 166, 0.15),
+              0 0 80px rgba(124, 104, 166, 0.05);
+}
+
+/* ── CTA button ─────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #7c68a6 0%, #5a4a7a 100%);
+  color: #ffffff;
+  padding: 12px 32px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(155, 140, 196, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #9b8cc4 0%, #7c68a6 100%);
+  box-shadow: 0 0 24px rgba(124, 104, 166, 0.3);
+  transform: translateY(-1px);
+}
+
+/* ── Navbar backdrop ────────────────────────────── */
+.navbar-blur {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(10, 10, 20, 0.8);
+  border-bottom: 1px solid rgba(124, 104, 166, 0.1);
+}
+
+/* ── Smooth section fade-in ─────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* ── Subtle grid background ─────────────────────── */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(124, 104, 166, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 104, 166, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── Scrollbar styling ──────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 104, 166, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 104, 166, 0.5);
+}
+
+/* ── Glass card static (no hover transform) ────── */
+.glass-card-static {
+  background: rgba(124, 104, 166, 0.06);
+  border: 1px solid rgba(124, 104, 166, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Form select dark theme ─────────────────────── */
+select option {
+  background: #0a0a14;
+  color: #ffffff;
+}
+
+/* ── Selection ──────────────────────────────────── */
+::selection {
+  background: rgba(124, 104, 166, 0.4);
+  color: #ffffff;
 }

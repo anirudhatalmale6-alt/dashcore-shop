@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Product  (single-product shop -- one row expected)
+// ---------------------------------------------------------------------------
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  description String   @db.Text
+  features    Json     @default("[]") // JSON array of feature strings
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tiers PricingTier[]
+
+  @@map("products")
+}
+
+// ---------------------------------------------------------------------------
+// PricingTier  (Starter / Professional / Enterprise etc.)
+// ---------------------------------------------------------------------------
+enum BillingPeriod {
+  monthly
+  yearly
+  lifetime
+}
+
+model PricingTier {
+  id        Int           @id @default(autoincrement())
+  productId Int           @map("product_id")
+  name      String        @db.VarChar(120)
+  price     Decimal       @db.Decimal(10, 2)
+  period    BillingPeriod
+  features  Json          @default("[]") // JSON array of feature strings
+  sortOrder Int           @default(0) @map("sort_order")
+  active    Boolean       @default(true)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([active, sortOrder])
+  @@map("pricing_tiers")
+}
+
+// ---------------------------------------------------------------------------
+// Order
+// ---------------------------------------------------------------------------
+enum PaymentMethod {
+  stripe
+  multisafepay
+  crypto
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum CryptoCurrency {
+  btc
+  usdt
+  usdc
+  eth
+}
+
+model Order {
+  id              Int              @id @default(autoincrement())
+  customerEmail   String           @map("customer_email") @db.VarChar(255)
+  customerName    String           @map("customer_name") @db.VarChar(255)
+  tierName        String           @map("tier_name") @db.VarChar(120)
+  tierPrice       Decimal          @map("tier_price") @db.Decimal(10, 2)
+  paymentMethod   PaymentMethod    @map("payment_method")
+  paymentStatus   PaymentStatus    @default(pending) @map("payment_status")
+  paymentId       String?          @map("payment_id") @db.VarChar(255)
+  cryptoCurrency  CryptoCurrency?  @map("crypto_currency")
+  cryptoTxHash    String?          @map("crypto_tx_hash") @db.VarChar(255)
+  notes           String?          @db.Text
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  confirmedAt     DateTime?        @map("confirmed_at")
+
+  @@index([customerEmail])
+  @@index([paymentStatus])
+  @@index([paymentMethod])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+// ---------------------------------------------------------------------------
+// AdminUser
+// ---------------------------------------------------------------------------
+enum AdminRole {
+  admin
+  super
+}
+
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  nickname     String    @unique @db.VarChar(80)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         AdminRole @default(admin)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}
+
+// ---------------------------------------------------------------------------
+// SiteSettings  (singleton -- always id = 1)
+// ---------------------------------------------------------------------------
+model SiteSettings {
+  id                   Int     @id @default(1)
+  siteName             String  @default("DashCore Shop") @map("site_name") @db.VarChar(255)
+  siteDescription      String  @default("") @map("site_description") @db.Text
+  contactEmail         String  @default("") @map("contact_email") @db.VarChar(255)
+  telegramUrl          String  @default("") @map("telegram_url") @db.VarChar(500)
+
+  // Stripe
+  stripeEnabled        Boolean @default(false) @map("stripe_enabled")
+  stripePublicKey      String  @default("") @map("stripe_public_key") @db.VarChar(500)
+  stripeSecretKey      String  @default("") @map("stripe_secret_key") @db.VarChar(500)
+
+  // MultiSafepay
+  multisafepayEnabled  Boolean @default(false) @map("multisafepay_enabled")
+  multisafepayApiKey   String  @default("") @map("multisafepay_api_key") @db.VarChar(500)
+
+  // Crypto wallets
+  cryptoEnabled        Boolean @default(false) @map("crypto_enabled")
+  btcAddress           String  @default("") @map("btc_address") @db.VarChar(255)
+  usdtAddress          String  @default("") @map("usdt_address") @db.VarChar(255) // TRC20
+  usdcAddress          String  @default("") @map("usdc_address") @db.VarChar(255) // ERC20
+  ethAddress           String  @default("") @map("eth_address") @db.VarChar(255)
+
+  // SMTP
+  smtpHost             String  @default("") @map("smtp_host") @db.VarChar(255)
+  smtpPort             Int     @default(587) @map("smtp_port")
+  smtpUser             String  @default("") @map("smtp_user") @db.VarChar(255)
+  smtpPass             String  @default("") @map("smtp_pass") @db.VarChar(255)
+  smtpFrom             String  @default("") @map("smtp_from") @db.VarChar(255)
+
+  // Email templates
+  confirmEmailSubject  String  @default("Order Confirmation") @map("confirm_email_subject") @db.VarChar(500)
+  confirmEmailBody     String  @default("") @map("confirm_email_body") @db.Text
+
+  // Tax
+  vatRate              Decimal @default(0) @map("vat_rate") @db.Decimal(5, 2)
+
+  @@map("site_settings")
+}
