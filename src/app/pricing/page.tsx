@@ -28,23 +28,23 @@ export default async function PricingPage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="hero-dark relative pt-28 pb-14 sm:pt-36 sm:pb-18">
-        <div className="hero-grid" />
+      {/* Hero - Light */}
+      <section className="hero-light relative pt-28 pb-14 sm:pt-36 sm:pb-18">
+        <div className="hero-pattern" />
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 mb-5">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#7c3aed]/8 border border-[#7c3aed]/15 px-4 py-1.5 mb-5">
             <span className="h-2 w-2 rounded-full bg-[#06b6d4] pulse-dot" />
-            <span className="text-xs font-semibold text-[#06b6d4] tracking-wide uppercase">
+            <span className="text-xs font-semibold text-[#7c3aed] tracking-wide uppercase">
               License Renewal
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0f172a]">
             Choose Your{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] to-[#06b6d4]">
               License Duration
             </span>
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-white/45 leading-relaxed">
+          <p className="mx-auto mt-4 max-w-xl text-base text-[#64748b] leading-relaxed">
             Renew your DashCore platform engine license. Longer durations save more.
           </p>
         </div>
@@ -73,7 +73,6 @@ export default async function PricingPage() {
                     isFeatured ? "card-featured" : "card"
                   } p-7 sm:p-8`}
                 >
-                  {/* Badge */}
                   <div className="flex items-center justify-between mb-5">
                     <span className={style.badge}>
                       {style.badgeText}

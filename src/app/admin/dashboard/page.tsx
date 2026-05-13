@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   Loader2,
+  Search,
   CheckCircle,
   XCircle,
   Clock,
@@ -79,6 +80,10 @@ interface SiteSettingsData {
   confirmEmailSubject: string;
   confirmEmailBody: string;
   vatRate: number;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  ogImageUrl: string;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -674,6 +679,36 @@ export default function AdminDashboard() {
                     <div className="sm:col-span-2">
                       <label className="block text-sm font-medium text-[#1a1625] mb-1.5">From Address</label>
                       <input type="email" value={settings.smtpFrom} onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })} placeholder="noreply@dashcore.eu" className="input-field" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEO */}
+                <div className="card-elevated p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Search className="h-4 w-4 text-[#7c3aed]" />
+                    <h3 className="text-sm font-semibold font-[var(--font-display)]">SEO Settings</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-[#1a1625] mb-1.5">Meta Title</label>
+                      <input type="text" value={settings.metaTitle} onChange={(e) => setSettings({ ...settings, metaTitle: e.target.value })} placeholder="DashCore | IPTV Platform Engine" className="input-field" />
+                      <p className="text-xs text-[#94a3b8] mt-1">Browser tab title and search engine title</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#1a1625] mb-1.5">Meta Description</label>
+                      <textarea value={settings.metaDescription} onChange={(e) => setSettings({ ...settings, metaDescription: e.target.value })} rows={2} placeholder="Renew your DashCore IPTV platform engine license..." className="input-field resize-y" />
+                      <p className="text-xs text-[#94a3b8] mt-1">Shown in search results (max 160 characters recommended)</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#1a1625] mb-1.5">Meta Keywords</label>
+                      <input type="text" value={settings.metaKeywords} onChange={(e) => setSettings({ ...settings, metaKeywords: e.target.value })} placeholder="IPTV, streaming, platform engine, license" className="input-field" />
+                      <p className="text-xs text-[#94a3b8] mt-1">Comma-separated keywords</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#1a1625] mb-1.5">OG Image URL</label>
+                      <input type="url" value={settings.ogImageUrl} onChange={(e) => setSettings({ ...settings, ogImageUrl: e.target.value })} placeholder="https://dashcore.eu/og-image.png" className="input-field" />
+                      <p className="text-xs text-[#94a3b8] mt-1">Social media preview image (1200x630 recommended)</p>
                     </div>
                   </div>
                 </div>

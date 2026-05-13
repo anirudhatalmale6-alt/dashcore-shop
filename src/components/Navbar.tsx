@@ -21,18 +21,14 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "navbar-blur" : "navbar-dark"
-      }`}
-    >
+    <header className={`fixed top-0 left-0 right-0 z-50 navbar-glass ${scrolled ? "scrolled" : ""}`}>
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] text-white font-bold text-sm transition-transform group-hover:scale-105">
               D
             </div>
-            <span className={`text-base font-bold tracking-tight transition-colors ${scrolled ? "text-[#0f172a]" : "text-white"}`}>
+            <span className="text-base font-bold tracking-tight text-[#0f172a]">
               Dash<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] to-[#06b6d4]">Core</span>
             </span>
           </Link>
@@ -42,9 +38,7 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className={`text-sm font-medium transition-colors ${
-                  scrolled ? "text-[#64748b] hover:text-[#0f172a]" : "text-white/60 hover:text-white"
-                }`}
+                className="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition-colors"
               >
                 {link.label}
               </Link>
@@ -54,23 +48,19 @@ export default function Navbar() {
               href="https://t.me/dashcore"
               target="_blank"
               rel="noopener noreferrer"
-              className={`transition-colors ${scrolled ? "text-[#64748b] hover:text-[#7c3aed]" : "text-white/60 hover:text-[#06b6d4]"}`}
+              className="text-[#64748b] hover:text-[#7c3aed] transition-colors"
               aria-label="Telegram"
             >
               <Send className="h-4 w-4" />
             </a>
 
-            <Link href="/pricing" className={`text-sm font-bold px-5 py-2 rounded-lg transition-all ${
-              scrolled
-                ? "bg-[#7c3aed] text-white hover:bg-[#6d28d9] shadow-sm"
-                : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-            }`}>
+            <Link href="/pricing" className="text-sm font-bold px-5 py-2 rounded-lg bg-[#7c3aed] text-white hover:bg-[#6d28d9] shadow-sm transition-all">
               Renew License
             </Link>
           </nav>
 
           <button
-            className={`md:hidden transition-colors ${scrolled ? "text-[#64748b] hover:text-[#0f172a]" : "text-white/70 hover:text-white"}`}
+            className="md:hidden text-[#64748b] hover:text-[#0f172a] transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -80,7 +70,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden navbar-blur border-t border-[#e2e8f0]">
+        <div className="md:hidden bg-white border-t border-[#e2e8f0]">
           <div className="px-5 py-4 space-y-3">
             {navLinks.map((link) => (
               <Link

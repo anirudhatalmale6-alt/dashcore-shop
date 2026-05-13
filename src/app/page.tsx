@@ -33,22 +33,21 @@ const protocolColumns = [
 export default function HomePage() {
   return (
     <div>
-      {/* ── Hero (Dark with aurora) ──────────────── */}
-      <section className="hero-dark relative pt-28 pb-20 sm:pt-36 sm:pb-28 min-h-[90vh] flex items-center">
-        <div className="hero-grid" />
+      {/* ── Hero (Light) ──────────────────────── */}
+      <section className="hero-light relative pt-28 pb-20 sm:pt-36 sm:pb-28 min-h-[90vh] flex items-center">
+        <div className="hero-pattern" />
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left - Text */}
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 mb-6 animate-fade-up">
-                <span className="h-2 w-2 rounded-full bg-[#06b6d4] pulse-dot" />
-                <span className="text-xs font-semibold text-[#06b6d4] tracking-wide uppercase">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#7c3aed]/8 border border-[#7c3aed]/15 px-4 py-1.5 mb-6 animate-fade-up">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 pulse-dot" />
+                <span className="text-xs font-semibold text-[#7c3aed] tracking-wide uppercase">
                   System Active 99.9%
                 </span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight leading-[1.08] text-white animate-fade-up anim-d1">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight leading-[1.08] text-[#0f172a] animate-fade-up anim-d1">
                 DashCore IPTV
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] via-[#a78bfa] to-[#06b6d4]">
@@ -56,7 +55,7 @@ export default function HomePage() {
                 </span>
               </h1>
 
-              <p className="mt-5 max-w-md text-base sm:text-lg text-white/50 leading-relaxed animate-fade-up anim-d2">
+              <p className="mt-5 max-w-md text-base sm:text-lg text-[#64748b] leading-relaxed animate-fade-up anim-d2">
                 High-performance streaming infrastructure for global platforms.
                 Renew your license and keep your platform running at full power.
               </p>
@@ -72,41 +71,40 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right - Visual stats panel */}
             <div className="hidden lg:block animate-fade-up anim-d4">
               <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-r from-[#7c3aed]/20 to-[#06b6d4]/20 rounded-3xl blur-2xl" />
-                <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
-                  <div className="flex items-center gap-3 text-white/80 text-sm">
+                <div className="absolute -inset-4 bg-gradient-to-r from-[#7c3aed]/8 to-[#06b6d4]/8 rounded-3xl blur-2xl" />
+                <div className="relative bg-white border border-[#e2e8f0] rounded-2xl p-6 space-y-4 shadow-lg shadow-[#7c3aed]/5">
+                  <div className="flex items-center gap-3 text-[#475569] text-sm">
                     <Wifi className="h-4 w-4 text-[#06b6d4]" />
                     <span className="font-medium">Live Platform Status</span>
-                    <span className="ml-auto flex items-center gap-1.5 text-xs text-emerald-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
+                    <span className="ml-auto flex items-center gap-1.5 text-xs text-emerald-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 pulse-dot" />
                       All Systems Operational
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { label: "Uptime", value: "99.9%", icon: Activity, color: "text-emerald-400" },
-                      { label: "Protocols", value: "50+", icon: Radio, color: "text-[#06b6d4]" },
-                      { label: "Max Connections", value: "1M+", icon: Users, color: "text-[#a78bfa]" },
-                      { label: "Response Time", value: "<10ms", icon: Zap, color: "text-[#f59e0b]" },
+                      { label: "Uptime", value: "99.9%", icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
+                      { label: "Protocols", value: "50+", icon: Radio, color: "text-[#06b6d4]", bg: "bg-[#06b6d4]/8" },
+                      { label: "Max Connections", value: "1M+", icon: Users, color: "text-[#7c3aed]", bg: "bg-[#7c3aed]/8" },
+                      { label: "Response Time", value: "<10ms", icon: Zap, color: "text-amber-600", bg: "bg-amber-50" },
                     ].map((s) => (
-                      <div key={s.label} className="bg-white/5 rounded-xl p-4 border border-white/5">
+                      <div key={s.label} className={`${s.bg} rounded-xl p-4 border border-[#e2e8f0]/50`}>
                         <s.icon className={`h-4 w-4 ${s.color} mb-2`} />
-                        <p className="text-2xl font-bold text-white">{s.value}</p>
-                        <p className="text-xs text-white/40 mt-0.5">{s.label}</p>
+                        <p className="text-2xl font-bold text-[#0f172a]">{s.value}</p>
+                        <p className="text-xs text-[#64748b] mt-0.5">{s.label}</p>
                       </div>
                     ))}
                   </div>
-                  <div className="bg-white/5 rounded-xl p-3 flex items-center gap-3 border border-white/5">
+                  <div className="bg-[#f8fafc] rounded-xl p-3 flex items-center gap-3 border border-[#e2e8f0]">
                     <MonitorPlay className="h-5 w-5 text-[#7c3aed]" />
                     <div className="flex-1">
-                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-[#e2e8f0] rounded-full overflow-hidden">
                         <div className="h-full w-[85%] bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] rounded-full" />
                       </div>
                     </div>
-                    <span className="text-xs text-white/50 font-mono">85% Load</span>
+                    <span className="text-xs text-[#64748b] font-mono">85% Load</span>
                   </div>
                 </div>
               </div>
@@ -116,11 +114,11 @@ export default function HomePage() {
       </section>
 
       {/* ── Features Grid ─────────────────────────── */}
-      <section id="features" className="py-16 sm:py-24 bg-[#f8fafc]">
+      <section id="features" className="py-16 sm:py-24 bg-white">
         <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="badge-purple mb-3 inline-block">Capabilities</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0f172a]">
               Enterprise-Grade Features
             </h2>
             <p className="mt-3 text-[#64748b] max-w-lg mx-auto">
@@ -145,11 +143,11 @@ export default function HomePage() {
       </section>
 
       {/* ── Protocol Coverage ─────────────────────── */}
-      <section className="py-16 sm:py-24">
+      <section className="py-16 sm:py-24 bg-[#f8fafc]">
         <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="badge-teal mb-3 inline-block">Technical Specs</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0f172a]">
               Complete Protocol Coverage
             </h2>
             <p className="mt-3 text-[#64748b] max-w-lg mx-auto">
@@ -164,7 +162,7 @@ export default function HomePage() {
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${col.bg}`}>
                     <col.icon className={`h-5 w-5 ${col.color}`} />
                   </div>
-                  <h3 className="text-sm font-bold">{col.title}</h3>
+                  <h3 className="text-sm font-bold text-[#0f172a]">{col.title}</h3>
                 </div>
                 <ul className="space-y-2.5">
                   {col.items.map((item) => (
@@ -181,15 +179,15 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA Section ───────────────────────────── */}
-      <section className="py-16 sm:py-24 bg-[#f8fafc]">
+      <section className="py-16 sm:py-24 bg-white">
         <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-          <div className="hero-dark relative overflow-hidden rounded-3xl px-8 sm:px-14 py-14 sm:py-18 text-center">
-            <div className="hero-grid" />
+          <div className="hero-light relative overflow-hidden rounded-3xl px-8 sm:px-14 py-14 sm:py-18 text-center border border-[#e2e8f0]">
+            <div className="hero-pattern" />
             <div className="relative z-10">
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0f172a]">
                 Ready to renew your license?
               </h2>
-              <p className="mt-3 text-white/50 max-w-md mx-auto">
+              <p className="mt-3 text-[#64748b] max-w-md mx-auto">
                 Keep your platform running at peak performance. Flexible durations, multiple payment methods.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">

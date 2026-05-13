@@ -158,5 +158,11 @@ model SiteSettings {
   // Tax
   vatRate              Decimal @default(0) @map("vat_rate") @db.Decimal(5, 2)
 
+  // SEO
+  metaTitle            String  @default("") @map("meta_title") @db.VarChar(255)
+  metaDescription      String  @default("") @map("meta_description") @db.Text
+  metaKeywords         String  @default("") @map("meta_keywords") @db.Text
+  ogImageUrl           String  @default("") @map("og_image_url") @db.VarChar(500)
+
   @@map("site_settings")
 }

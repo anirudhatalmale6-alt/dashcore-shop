@@ -65,6 +65,10 @@ export async function PUT(request: NextRequest) {
       "confirmEmailSubject",
       "confirmEmailBody",
       "vatRate",
+      "metaTitle",
+      "metaDescription",
+      "metaKeywords",
+      "ogImageUrl",
     ];
 
     const updateData: Record<string, unknown> = {};
