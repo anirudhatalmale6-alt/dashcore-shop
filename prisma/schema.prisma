@@ -8,23 +8,47 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// Product  (single-product shop -- one row expected)
+// Product  (multi-product shop)
 // ---------------------------------------------------------------------------
 model Product {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(255)
   description String   @db.Text
-  features    Json     @default("[]") // JSON array of feature strings
+  features    Json     @default("[]")
+  badge       String   @default("") @db.VarChar(80)
+  badgeColor  String   @default("purple") @map("badge_color") @db.VarChar(30)
+  featured    Boolean  @default(false)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  tiers PricingTier[]
+  tiers   PricingTier[]
+  options ProductOption[]
 
+  @@index([active, sortOrder])
   @@map("products")
 }
 
 // ---------------------------------------------------------------------------
-// PricingTier  (Starter / Professional / Enterprise etc.)
+// ProductOption  (configurable dropdowns per product)
+// ---------------------------------------------------------------------------
+model ProductOption {
+  id        Int     @id @default(autoincrement())
+  productId Int     @map("product_id")
+  name      String  @db.VarChar(120)
+  choices   Json    @default("[]")
+  required  Boolean @default(true)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_options")
+}
+
+// ---------------------------------------------------------------------------
+// PricingTier  (duration-based pricing per product)
 // ---------------------------------------------------------------------------
 enum BillingPeriod {
   monthly
@@ -40,7 +64,7 @@ model PricingTier {
   name      String        @db.VarChar(120)
   price     Decimal       @db.Decimal(10, 2)
   period    BillingPeriod
-  features  Json          @default("[]") // JSON array of feature strings
+  features  Json          @default("[]")
   sortOrder Int           @default(0) @map("sort_order")
   active    Boolean       @default(true)
   createdAt DateTime      @default(now()) @map("created_at")
@@ -88,6 +112,7 @@ model Order {
   cryptoCurrency  CryptoCurrency?  @map("crypto_currency")
   cryptoTxHash    String?          @map("crypto_tx_hash") @db.VarChar(255)
   notes           String?          @db.Text
+  selectedOptions Json?            @map("selected_options")
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
   confirmedAt     DateTime?        @map("confirmed_at")
@@ -140,8 +165,8 @@ model SiteSettings {
   // Crypto wallets
   cryptoEnabled        Boolean @default(false) @map("crypto_enabled")
   btcAddress           String  @default("") @map("btc_address") @db.VarChar(255)
-  usdtAddress          String  @default("") @map("usdt_address") @db.VarChar(255) // TRC20
-  usdcAddress          String  @default("") @map("usdc_address") @db.VarChar(255) // ERC20
+  usdtAddress          String  @default("") @map("usdt_address") @db.VarChar(255)
+  usdcAddress          String  @default("") @map("usdc_address") @db.VarChar(255)
   ethAddress           String  @default("") @map("eth_address") @db.VarChar(255)
 
   // SMTP
@@ -174,7 +199,37 @@ model SiteSettings {
   twitterDescription   String  @default("") @map("twitter_description") @db.Text
   twitterImageUrl      String  @default("") @map("twitter_image_url") @db.VarChar(500)
 
+  // Cookie Bar
+  cookieBarEnabled     Boolean @default(true) @map("cookie_bar_enabled")
+  cookieBarText        String  @default("We use cookies to improve your experience. By continuing to browse, you agree to our cookie policy.") @map("cookie_bar_text") @db.Text
+  cookieBarButtonText  String  @default("Accept") @map("cookie_bar_button_text") @db.VarChar(50)
+
+  // Homepage Content
+  heroTitle            String  @default("DashCore IPTV Platform Engine") @map("hero_title") @db.VarChar(500)
+  heroSubtitle         String  @default("High-performance streaming infrastructure") @map("hero_subtitle") @db.Text
+  heroButtonText       String  @default("View Plans") @map("hero_button_text") @db.VarChar(100)
+  showProductsOnHome   Boolean @default(true) @map("show_products_on_home")
+
   @@map("site_settings")
+}
+
+// ---------------------------------------------------------------------------
+// CmsPage  (custom pages)
+// ---------------------------------------------------------------------------
+model CmsPage {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(255)
+  slug      String   @unique @db.VarChar(255)
+  content   String   @db.Text
+  active    Boolean  @default(true)
+  showInNav Boolean  @default(false) @map("show_in_nav")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([slug])
+  @@index([active])
+  @@map("cms_pages")
 }
 
 // ---------------------------------------------------------------------------

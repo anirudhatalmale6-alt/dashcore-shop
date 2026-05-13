@@ -4,21 +4,40 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, Send } from "lucide-react";
 
-const navLinks = [
+interface NavPage {
+  title: string;
+  slug: string;
+}
+
+const staticLinks = [
   { label: "Features", href: "/#features" },
   { label: "Pricing", href: "/pricing" },
   { label: "Contact", href: "/contact" },
+  { label: "Order Lookup", href: "/order-lookup" },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cmsPages, setCmsPages] = useState<NavPage[]>([]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    fetch("/api/pages/nav")
+      .then((res) => res.json())
+      .then((data) => setCmsPages(data || []))
+      .catch(() => {});
+  }, []);
+
+  const allLinks = [
+    ...staticLinks,
+    ...cmsPages.map((p) => ({ label: p.title, href: `/page/${p.slug}` })),
+  ];
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 navbar-glass ${scrolled ? "scrolled" : ""}`}>
@@ -34,9 +53,9 @@ export default function Navbar() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-7">
-            {navLinks.map((link) => (
+            {allLinks.map((link) => (
               <Link
-                key={link.label}
+                key={link.href}
                 href={link.href}
                 className="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition-colors"
               >
@@ -72,9 +91,9 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-[#e2e8f0]">
           <div className="px-5 py-4 space-y-3">
-            {navLinks.map((link) => (
+            {allLinks.map((link) => (
               <Link
-                key={link.label}
+                key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
                 className="block text-sm text-[#64748b] font-medium hover:text-[#0f172a] py-2"

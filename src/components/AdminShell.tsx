@@ -11,6 +11,8 @@ import {
   LogOut,
   Search,
   MessageSquare,
+  CreditCard,
+  FileText,
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +20,8 @@ const navItems = [
   { key: "products", label: "Products", href: "/admin/products", icon: Package },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare },
+  { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText },
+  { key: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
   { key: "seo", label: "SEO", href: "/admin/seo", icon: Search },
 ];

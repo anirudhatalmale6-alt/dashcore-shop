@@ -75,6 +75,13 @@ export async function PUT(request: NextRequest) {
       "twitterTitle",
       "twitterDescription",
       "twitterImageUrl",
+      "cookieBarEnabled",
+      "cookieBarText",
+      "cookieBarButtonText",
+      "heroTitle",
+      "heroSubtitle",
+      "heroButtonText",
+      "showProductsOnHome",
     ];
 
     const updateData: Record<string, unknown> = {};

@@ -1,18 +1,38 @@
 import type { Metadata } from "next";
+import { prisma } from "@/lib/db";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "DashCore | IPTV Platform Engine — License Renewal",
-  description:
-    "Renew your DashCore IPTV platform engine license. High-performance streaming infrastructure with full protocol coverage, advanced load balancing, and enterprise security.",
-  keywords: ["IPTV middleware", "streaming engine", "DashCore license", "IPTV platform"],
-  openGraph: {
-    title: "DashCore | IPTV Platform Engine",
-    description: "Renew your DashCore streaming engine license. Built for scale, engineered for reliability.",
-    siteName: "DashCore",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const s = await prisma.siteSettings.findUnique({ where: { id: 1 } });
+    if (!s) return { title: "DashCore" };
+
+    return {
+      title: s.metaTitle || "DashCore | IPTV Platform Engine",
+      description: s.metaDescription || "Renew your DashCore IPTV platform engine license.",
+      keywords: s.metaKeywords ? s.metaKeywords.split(",").map((k) => k.trim()) : [],
+      icons: s.faviconUrl ? [{ rel: "icon", url: s.faviconUrl }] : [],
+      openGraph: {
+        title: s.ogTitle || s.metaTitle || "DashCore",
+        description: s.ogDescription || s.metaDescription || "",
+        siteName: s.siteName || "DashCore",
+        type: "website",
+        ...(s.ogImageUrl ? { images: [{ url: s.ogImageUrl, width: 1200, height: 630 }] } : {}),
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: s.twitterTitle || s.metaTitle || "DashCore",
+        description: s.twitterDescription || s.metaDescription || "",
+        ...(s.twitterImageUrl ? { images: [s.twitterImageUrl] } : {}),
+      },
+    };
+  } catch {
+    return {
+      title: "DashCore | IPTV Platform Engine",
+      description: "Renew your DashCore IPTV platform engine license.",
+    };
+  }
+}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

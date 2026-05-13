@@ -5,10 +5,8 @@ import { PaymentMethod, CryptoCurrency } from "@prisma/client";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerEmail, customerName, tierId, paymentMethod, cryptoCurrency } =
-      body;
+    const { customerEmail, customerName, tierId, paymentMethod, cryptoCurrency, selectedOptions } = body;
 
-    // Validate required fields
     if (!customerEmail || !customerName || !tierId || !paymentMethod) {
       return NextResponse.json(
         { error: "Missing required fields: customerEmail, customerName, tierId, paymentMethod" },
@@ -16,48 +14,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(customerEmail)) {
-      return NextResponse.json(
-        { error: "Invalid email address" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
-    // Validate payment method
     const validMethods: PaymentMethod[] = ["stripe", "multisafepay", "crypto"];
     if (!validMethods.includes(paymentMethod)) {
-      return NextResponse.json(
-        { error: "Invalid payment method. Must be: stripe, multisafepay, or crypto" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
     }
 
-    // Validate crypto currency if crypto payment
     if (paymentMethod === "crypto") {
       const validCoins: CryptoCurrency[] = ["btc", "usdt", "usdc", "eth"];
       if (!cryptoCurrency || !validCoins.includes(cryptoCurrency)) {
-        return NextResponse.json(
-          { error: "Crypto payment requires a valid cryptoCurrency: btc, usdt, usdc, or eth" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Crypto payment requires a valid cryptoCurrency" }, { status: 400 });
       }
     }
 
-    // Look up the pricing tier
     const tier = await prisma.pricingTier.findUnique({
       where: { id: Number(tierId) },
     });
 
     if (!tier || !tier.active) {
-      return NextResponse.json(
-        { error: "Pricing tier not found or inactive" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Pricing tier not found or inactive" }, { status: 404 });
     }
 
-    // Create the order
     const order = await prisma.order.create({
       data: {
         customerEmail: customerEmail.trim(),
@@ -66,10 +47,8 @@ export async function POST(request: NextRequest) {
         tierPrice: tier.price,
         paymentMethod: paymentMethod as PaymentMethod,
         paymentStatus: "pending",
-        cryptoCurrency:
-          paymentMethod === "crypto"
-            ? (cryptoCurrency as CryptoCurrency)
-            : null,
+        cryptoCurrency: paymentMethod === "crypto" ? (cryptoCurrency as CryptoCurrency) : null,
+        selectedOptions: selectedOptions || undefined,
       },
     });
 
@@ -85,9 +64,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (err) {
     console.error("Order creation error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if a tierId was requested (for checkout page tier info)
     const { searchParams } = new URL(request.url);
     const tierId = searchParams.get("tierId");
 
@@ -11,9 +10,9 @@ export async function GET(request: NextRequest) {
       where: { id: 1 },
     });
 
-    // Public settings only -- no secret keys
     const publicSettings = {
       siteName: settings?.siteName || "DashCore",
+      siteDescription: settings?.siteDescription || "",
       stripeEnabled: settings?.stripeEnabled ?? false,
       multisafepayEnabled: settings?.multisafepayEnabled ?? false,
       cryptoEnabled: settings?.cryptoEnabled ?? false,
@@ -21,9 +20,15 @@ export async function GET(request: NextRequest) {
       usdtAddress: settings?.usdtAddress || "",
       usdcAddress: settings?.usdcAddress || "",
       ethAddress: settings?.ethAddress || "",
+      cookieBarEnabled: settings?.cookieBarEnabled ?? true,
+      cookieBarText: settings?.cookieBarText || "We use cookies to improve your experience.",
+      cookieBarButtonText: settings?.cookieBarButtonText || "Accept",
+      heroTitle: settings?.heroTitle || "DashCore IPTV Platform Engine",
+      heroSubtitle: settings?.heroSubtitle || "High-performance streaming infrastructure",
+      heroButtonText: settings?.heroButtonText || "View Plans",
+      showProductsOnHome: settings?.showProductsOnHome ?? true,
     };
 
-    // If tierId requested, include tier info
     if (tierId) {
       const tier = await prisma.pricingTier.findUnique({
         where: { id: Number(tierId) },
@@ -35,9 +40,7 @@ export async function GET(request: NextRequest) {
           const raw = tier.features;
           if (typeof raw === "string") features = JSON.parse(raw);
           else if (Array.isArray(raw)) features = raw as string[];
-        } catch {
-          features = [];
-        }
+        } catch { features = []; }
 
         return NextResponse.json({
           ...publicSettings,
@@ -55,9 +58,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(publicSettings);
   } catch (err) {
     console.error("Settings fetch error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
