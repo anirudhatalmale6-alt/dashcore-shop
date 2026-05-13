@@ -23,28 +23,26 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "navbar-blur" : "bg-transparent"
+        scrolled ? "navbar-blur shadow-sm" : "bg-transparent"
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#7c68a6] to-[#5a4a7a] text-white font-bold text-lg transition-shadow group-hover:shadow-[0_0_16px_rgba(124,104,166,0.4)]">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9] text-white font-bold text-sm font-[var(--font-display)] transition-transform group-hover:scale-105">
               D
             </div>
-            <span className="text-lg font-semibold tracking-tight text-white">
-              Dash<span className="text-[#9b8cc4]">Core</span>
+            <span className="text-base font-semibold tracking-tight font-[var(--font-display)]">
+              Dash<span className="text-[#6d28d9]">Core</span>
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm text-zinc-400 transition-colors hover:text-white"
+                className="text-sm text-[#8c8579] font-medium transition-colors hover:text-[#1a1625]"
               >
                 {link.label}
               </Link>
@@ -54,42 +52,36 @@ export default function Navbar() {
               href="https://t.me/dashcore"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-zinc-400 transition-colors hover:text-[#9b8cc4]"
+              className="text-[#8c8579] transition-colors hover:text-[#6d28d9]"
               aria-label="Telegram"
             >
               <Send className="h-4 w-4" />
             </a>
 
-            <Link href="/pricing" className="btn-primary text-sm px-5 py-2.5">
-              Get Started
+            <Link href="/pricing" className="btn-primary text-sm px-5 py-2">
+              Renew License
             </Link>
           </nav>
 
-          {/* Mobile toggle */}
           <button
-            className="md:hidden text-zinc-400 hover:text-white"
+            className="md:hidden text-[#8c8579] hover:text-[#1a1625]"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
-            {mobileOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden navbar-blur border-t border-[rgba(124,104,166,0.1)]">
-          <div className="px-4 py-4 space-y-3">
+        <div className="md:hidden navbar-blur border-t border-[#e8e5df]">
+          <div className="px-5 py-4 space-y-3">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block text-sm text-zinc-400 transition-colors hover:text-white py-2"
+                className="block text-sm text-[#8c8579] font-medium transition-colors hover:text-[#1a1625] py-2"
               >
                 {link.label}
               </Link>
@@ -99,17 +91,16 @@ export default function Navbar() {
                 href="https://t.me/dashcore"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-400 transition-colors hover:text-[#9b8cc4]"
-                aria-label="Telegram"
+                className="text-[#8c8579] transition-colors hover:text-[#6d28d9]"
               >
                 <Send className="h-4 w-4" />
               </a>
               <Link
                 href="/pricing"
                 onClick={() => setMobileOpen(false)}
-                className="btn-primary text-sm px-5 py-2.5 inline-block"
+                className="btn-primary text-sm px-5 py-2 inline-block"
               >
-                Get Started
+                Renew License
               </Link>
             </div>
           </div>

@@ -28,6 +28,8 @@ model Product {
 // ---------------------------------------------------------------------------
 enum BillingPeriod {
   monthly
+  quarterly
+  semiannual
   yearly
   lifetime
 }

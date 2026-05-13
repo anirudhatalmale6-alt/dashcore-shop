@@ -15,7 +15,6 @@ import {
   Mail,
 } from "lucide-react";
 
-/* ── Types ──────────────────────────────────────── */
 interface TierInfo {
   id: number;
   name: string;
@@ -38,7 +37,6 @@ interface SiteSettings {
   ethAddress: string;
 }
 
-/* ── Crypto address labels ──────────────────────── */
 const cryptoLabels: Record<CryptoCoin, { name: string; network: string }> = {
   btc: { name: "Bitcoin", network: "BTC" },
   usdt: { name: "Tether", network: "TRC-20" },
@@ -46,7 +44,16 @@ const cryptoLabels: Record<CryptoCoin, { name: string; network: string }> = {
   eth: { name: "Ethereum", network: "ERC-20" },
 };
 
-/* ── Inner component using useSearchParams ──────── */
+function periodLabel(period: string): string {
+  switch (period) {
+    case "monthly": return "1 month";
+    case "quarterly": return "3 months";
+    case "semiannual": return "6 months";
+    case "yearly": return "1 year";
+    default: return period;
+  }
+}
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const tierId = searchParams.get("tier");
@@ -57,21 +64,18 @@ function CheckoutContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Form state
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [paymentTab, setPaymentTab] = useState<PaymentTab>("stripe");
   const [cryptoCoin, setCryptoCoin] = useState<CryptoCoin>("btc");
 
-  // Success state
   const [orderId, setOrderId] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
-        // Fetch tier info and settings in parallel
-        const [tierRes, settingsRes] = await Promise.all([
+        const [, settingsRes] = await Promise.all([
           tierId ? fetch(`/api/orders?tierId=${tierId}`) : null,
           fetch("/api/settings"),
         ]);
@@ -81,15 +85,11 @@ function CheckoutContent() {
           setSettings(settingsData);
         }
 
-        // We need to get tier info from the pricing tiers endpoint
-        // For now, fetch it from our tier-info approach via the checkout API
         if (tierId) {
           const infoRes = await fetch(`/api/settings?tierId=${tierId}`);
           if (infoRes.ok) {
             const data = await infoRes.json();
-            if (data.tier) {
-              setTier(data.tier);
-            }
+            if (data.tier) setTier(data.tier);
           }
         }
       } catch {
@@ -106,10 +106,7 @@ function CheckoutContent() {
       setError("Please fill in your name and email.");
       return;
     }
-    if (!tier) {
-      setError("No plan selected.");
-      return;
-    }
+    if (!tier) { setError("No plan selected."); return; }
 
     setSubmitting(true);
     setError("");
@@ -128,11 +125,7 @@ function CheckoutContent() {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to create order.");
-        return;
-      }
-
+      if (!res.ok) { setError(data.error || "Failed to create order."); return; }
       setOrderId(data.id);
     } catch {
       setError("Network error. Please try again.");
@@ -158,30 +151,25 @@ function CheckoutContent() {
     return map[cryptoCoin] || "";
   };
 
-  /* ── Loading state ──────────────────────────────── */
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#9b8cc4]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
       </div>
     );
   }
 
-  /* ── No tier selected ───────────────────────────── */
   if (!tier && !orderId) {
     return (
-      <div className="mx-auto max-w-xl px-4 pt-32 pb-20 text-center">
-        <div className="glass-card p-10">
-          <h2 className="text-xl font-semibold text-white mb-4">
+      <div className="mx-auto max-w-xl px-5 pt-32 pb-20 text-center">
+        <div className="card-elevated p-10">
+          <h2 className="text-xl font-semibold font-[var(--font-display)] mb-3">
             No plan selected
           </h2>
-          <p className="text-zinc-400 mb-6">
-            Please select a plan from the pricing page first.
+          <p className="text-[#8c8579] mb-6">
+            Please select a license duration from the pricing page first.
           </p>
-          <Link
-            href="/pricing"
-            className="btn-primary inline-flex items-center gap-2"
-          >
+          <Link href="/pricing" className="btn-primary inline-flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             View Pricing
           </Link>
@@ -190,43 +178,35 @@ function CheckoutContent() {
     );
   }
 
-  /* ── Success state ──────────────────────────────── */
   if (orderId) {
     return (
-      <div className="mx-auto max-w-xl px-4 pt-32 pb-20">
-        <div className="glass-card p-10 text-center glow-purple">
-          <CheckCircle className="h-16 w-16 text-[#9b8cc4] mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-white mb-3">
-            Order Created Successfully
-          </h2>
-          <p className="text-zinc-400 mb-2">
-            Your order has been placed and is pending payment confirmation.
-          </p>
-          <div className="my-6 p-4 rounded-xl bg-[rgba(124,104,166,0.1)] border border-[rgba(124,104,166,0.2)]">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">
-              Order ID
-            </p>
-            <p className="text-2xl font-mono font-bold text-[#9b8cc4]">
-              #{orderId}
-            </p>
+      <div className="mx-auto max-w-xl px-5 pt-32 pb-20">
+        <div className="card-elevated p-10 text-center">
+          <div className="flex justify-center mb-5">
+            <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
           </div>
-          <p className="text-sm text-zinc-500 mb-6">
+          <h2 className="text-2xl font-bold font-[var(--font-display)] mb-2">
+            Order Created
+          </h2>
+          <p className="text-[#8c8579] mb-2">
+            Your order is pending payment confirmation.
+          </p>
+          <div className="my-5 p-4 rounded-xl bg-[#6d28d9]/5 border border-[#6d28d9]/15">
+            <p className="text-xs text-[#8c8579] uppercase tracking-wider mb-1 font-medium">Order ID</p>
+            <p className="text-2xl font-mono font-bold text-[#6d28d9]">#{orderId}</p>
+          </div>
+          <p className="text-sm text-[#8c8579] mb-6">
             {paymentTab === "crypto"
-              ? "Once your payment is confirmed on-chain, your order will be activated."
-              : "Our team will verify your payment and activate your order shortly."}
+              ? "Once your payment is confirmed on-chain, your license will be activated."
+              : "Our team will verify your payment and activate your license shortly."}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-xl py-3 px-6 text-sm font-medium border border-[rgba(124,104,166,0.3)] text-white hover:bg-[rgba(124,104,166,0.1)] transition-all"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
+            <Link href="/" className="btn-outline inline-flex items-center justify-center gap-2 text-sm">
+              <ArrowLeft className="h-4 w-4" /> Back to Home
             </Link>
-            <Link
-              href="/pricing"
-              className="btn-primary inline-flex items-center justify-center gap-2 text-sm"
-            >
+            <Link href="/pricing" className="btn-primary inline-flex items-center justify-center gap-2 text-sm">
               View Plans
             </Link>
           </div>
@@ -235,302 +215,220 @@ function CheckoutContent() {
     );
   }
 
-  /* ── Checkout form ──────────────────────────────── */
   return (
-    <div className="bg-grid">
-      <div className="mx-auto max-w-4xl px-4 pt-32 pb-20 sm:pt-36">
-        {/* Back link */}
-        <Link
-          href="/pricing"
-          className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors mb-8"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Pricing
-        </Link>
+    <div className="mx-auto max-w-4xl px-5 pt-28 pb-16 sm:pt-32">
+      <Link
+        href="/pricing"
+        className="inline-flex items-center gap-2 text-sm text-[#8c8579] hover:text-[#1a1625] transition-colors mb-6"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Pricing
+      </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Left: Order summary */}
-          <div className="lg:col-span-2">
-            <div className="glass-card p-6 sticky top-24">
-              <h3 className="text-sm font-medium uppercase tracking-wider text-zinc-500 mb-4">
-                Order Summary
-              </h3>
-              <div className="mb-4">
-                <p className="text-lg font-semibold text-white">{tier!.name}</p>
-                <p className="text-sm text-zinc-400 mt-1">
-                  DashCore IPTV Middleware
-                </p>
-              </div>
-              <div className="border-t border-[rgba(124,104,166,0.15)] pt-4">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-zinc-400 text-sm">Price</span>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-white">
-                      ${tier!.price}
-                    </span>
-                    <span className="text-zinc-500 text-sm ml-1">
-                      /{tier!.period === "monthly" ? "mo" : tier!.period === "yearly" ? "yr" : ""}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {tier!.features && tier!.features.length > 0 && (
-                <div className="mt-4 border-t border-[rgba(124,104,166,0.15)] pt-4">
-                  <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">
-                    Included
-                  </p>
-                  <ul className="space-y-2">
-                    {tier!.features.slice(0, 5).map((f: string, i: number) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2 text-xs text-zinc-400"
-                      >
-                        <span className="mt-1 block h-1 w-1 shrink-0 rounded-full bg-[#7c68a6]" />
-                        {f}
-                      </li>
-                    ))}
-                    {tier!.features.length > 5 && (
-                      <li className="text-xs text-zinc-500">
-                        +{tier!.features.length - 5} more features
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Order summary */}
+        <div className="lg:col-span-2">
+          <div className="card-elevated p-6 sticky top-24">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8c8579] mb-4 font-[var(--font-display)]">
+              Order Summary
+            </h3>
+            <div className="mb-4">
+              <p className="text-base font-semibold font-[var(--font-display)]">{tier!.name} License</p>
+              <p className="text-sm text-[#8c8579] mt-0.5">DashCore Platform Engine</p>
             </div>
-          </div>
-
-          {/* Right: Checkout form */}
-          <div className="lg:col-span-3">
-            <div className="glass-card p-8">
-              <h2 className="text-xl font-bold text-white mb-6">Checkout</h2>
-
-              {/* Error message */}
-              {error && (
-                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                  {error}
-                </div>
-              )}
-
-              {/* Customer info */}
-              <div className="space-y-4 mb-8">
+            <div className="border-t border-[#e8e5df] pt-4">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-[#8c8579]">Price</span>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                    <input
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="John Doe"
-                      className="w-full rounded-xl bg-[rgba(124,104,166,0.06)] border border-[rgba(124,104,166,0.15)] pl-10 pr-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-[#7c68a6] focus:outline-none focus:ring-1 focus:ring-[#7c68a6] transition-all"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                    <input
-                      type="email"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="john@example.com"
-                      className="w-full rounded-xl bg-[rgba(124,104,166,0.06)] border border-[rgba(124,104,166,0.15)] pl-10 pr-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-[#7c68a6] focus:outline-none focus:ring-1 focus:ring-[#7c68a6] transition-all"
-                    />
-                  </div>
+                  <span className="text-2xl font-bold font-[var(--font-display)]">${tier!.price}</span>
+                  <span className="text-sm text-[#8c8579] ml-1">/{periodLabel(tier!.period)}</span>
                 </div>
               </div>
+            </div>
+            {tier!.features && tier!.features.length > 0 && (
+              <div className="mt-4 border-t border-[#e8e5df] pt-4">
+                <p className="text-xs text-[#8c8579] uppercase tracking-wider mb-3 font-medium">Included</p>
+                <ul className="space-y-1.5">
+                  {tier!.features.slice(0, 5).map((f: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-[#5a5550]">
+                      <span className="mt-1.5 block h-1 w-1 shrink-0 rounded-full bg-[#6d28d9]" />
+                      {f}
+                    </li>
+                  ))}
+                  {tier!.features.length > 5 && (
+                    <li className="text-xs text-[#8c8579]">+{tier!.features.length - 5} more</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
 
-              {/* Payment method tabs */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-zinc-300 mb-3">
-                  Payment Method
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    {
-                      key: "stripe" as PaymentTab,
-                      icon: CreditCard,
-                      label: "Stripe",
-                      enabled: settings?.stripeEnabled !== false,
-                    },
-                    {
-                      key: "multisafepay" as PaymentTab,
-                      icon: Wallet,
-                      label: "MultiSafepay",
-                      enabled: settings?.multisafepayEnabled !== false,
-                    },
-                    {
-                      key: "crypto" as PaymentTab,
-                      icon: Bitcoin,
-                      label: "Crypto",
-                      enabled: settings?.cryptoEnabled !== false,
-                    },
-                  ] as const).map((method) => (
+        {/* Checkout form */}
+        <div className="lg:col-span-3">
+          <div className="card-elevated p-7">
+            <h2 className="text-lg font-bold font-[var(--font-display)] mb-5">Checkout</h2>
+
+            {error && (
+              <div className="mb-5 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-[#1a1625] mb-1.5">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8c8579]" />
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="John Doe"
+                    className="input-field pl-10"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1625] mb-1.5">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8c8579]" />
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="john@example.com"
+                    className="input-field pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Payment tabs */}
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-[#1a1625] mb-2">Payment Method</label>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: "stripe" as PaymentTab, icon: CreditCard, label: "Stripe", enabled: settings?.stripeEnabled !== false },
+                  { key: "multisafepay" as PaymentTab, icon: Wallet, label: "MultiSafepay", enabled: settings?.multisafepayEnabled !== false },
+                  { key: "crypto" as PaymentTab, icon: Bitcoin, label: "Crypto", enabled: settings?.cryptoEnabled !== false },
+                ] as const).map((method) => (
+                  <button
+                    key={method.key}
+                    onClick={() => setPaymentTab(method.key)}
+                    disabled={!method.enabled}
+                    className={`flex flex-col items-center gap-1.5 rounded-lg py-3 px-3 text-xs font-medium transition-all border ${
+                      paymentTab === method.key
+                        ? "bg-[#6d28d9]/8 border-[#6d28d9] text-[#6d28d9]"
+                        : method.enabled
+                        ? "bg-white border-[#e8e5df] text-[#8c8579] hover:border-[#d4d0c8] hover:text-[#1a1625]"
+                        : "bg-[#f3f1ee] border-[#e8e5df] text-[#c5c0b8] cursor-not-allowed"
+                    }`}
+                  >
+                    <method.icon className="h-5 w-5" />
+                    {method.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Stripe */}
+            {paymentTab === "stripe" && (
+              <div className="mb-5 p-5 rounded-lg bg-[#f3f1ee] border border-[#e8e5df]">
+                <p className="text-sm text-[#5a5550] mb-4">
+                  You will be redirected to Stripe secure checkout to complete your payment by card.
+                </p>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                  {submitting ? "Processing..." : "Pay with Card"}
+                </button>
+              </div>
+            )}
+
+            {/* MultiSafepay */}
+            {paymentTab === "multisafepay" && (
+              <div className="mb-5 p-5 rounded-lg bg-[#f3f1ee] border border-[#e8e5df]">
+                <p className="text-sm text-[#5a5550] mb-4">
+                  Pay using iDEAL, Bancontact, or other local payment methods via MultiSafepay.
+                </p>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+                  {submitting ? "Processing..." : "Pay with iDEAL / Bancontact"}
+                </button>
+              </div>
+            )}
+
+            {/* Crypto */}
+            {paymentTab === "crypto" && (
+              <div className="mb-5 space-y-3">
+                <div className="grid grid-cols-4 gap-2">
+                  {(["btc", "usdt", "usdc", "eth"] as CryptoCoin[]).map((coin) => (
                     <button
-                      key={method.key}
-                      onClick={() => setPaymentTab(method.key)}
-                      disabled={!method.enabled}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl py-3 px-3 text-xs font-medium transition-all ${
-                        paymentTab === method.key
-                          ? "bg-[rgba(124,104,166,0.15)] border-2 border-[#7c68a6] text-white"
-                          : method.enabled
-                          ? "bg-[rgba(124,104,166,0.04)] border border-[rgba(124,104,166,0.1)] text-zinc-400 hover:text-white hover:border-[rgba(124,104,166,0.25)]"
-                          : "bg-[rgba(124,104,166,0.02)] border border-[rgba(124,104,166,0.05)] text-zinc-600 cursor-not-allowed"
+                      key={coin}
+                      onClick={() => setCryptoCoin(coin)}
+                      className={`rounded-lg py-2 px-3 text-xs font-semibold uppercase transition-all border ${
+                        cryptoCoin === coin
+                          ? "bg-[#6d28d9] text-white border-[#6d28d9]"
+                          : "bg-white text-[#8c8579] border-[#e8e5df] hover:border-[#d4d0c8]"
                       }`}
                     >
-                      <method.icon className="h-5 w-5" />
-                      {method.label}
+                      {coin}
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {/* Stripe payment */}
-              {paymentTab === "stripe" && (
-                <div className="mb-6 p-5 rounded-xl bg-[rgba(124,104,166,0.04)] border border-[rgba(124,104,166,0.1)]">
-                  <p className="text-sm text-zinc-400 mb-4">
-                    You will be redirected to Stripe secure checkout to complete
-                    your payment by card.
-                  </p>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {submitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <CreditCard className="h-4 w-4" />
-                    )}
-                    {submitting ? "Processing..." : "Pay with Card"}
-                  </button>
-                </div>
-              )}
+                <div className="p-5 rounded-lg bg-[#f3f1ee] border border-[#e8e5df]">
+                  <p className="text-sm font-medium text-[#1a1625] mb-0.5">{cryptoLabels[cryptoCoin].name}</p>
+                  <p className="text-xs text-[#8c8579] mb-4">Network: {cryptoLabels[cryptoCoin].network}</p>
 
-              {/* MultiSafepay payment */}
-              {paymentTab === "multisafepay" && (
-                <div className="mb-6 p-5 rounded-xl bg-[rgba(124,104,166,0.04)] border border-[rgba(124,104,166,0.1)]">
-                  <p className="text-sm text-zinc-400 mb-4">
-                    Pay using iDEAL, Bancontact, or other local payment methods
-                    via MultiSafepay.
-                  </p>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {submitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Wallet className="h-4 w-4" />
-                    )}
-                    {submitting
-                      ? "Processing..."
-                      : "Pay with iDEAL / Bancontact"}
-                  </button>
-                </div>
-              )}
-
-              {/* Crypto payment */}
-              {paymentTab === "crypto" && (
-                <div className="mb-6 space-y-4">
-                  {/* Crypto coin tabs */}
-                  <div className="grid grid-cols-4 gap-2">
-                    {(
-                      ["btc", "usdt", "usdc", "eth"] as CryptoCoin[]
-                    ).map((coin) => (
-                      <button
-                        key={coin}
-                        onClick={() => setCryptoCoin(coin)}
-                        className={`rounded-lg py-2 px-3 text-xs font-semibold uppercase transition-all ${
-                          cryptoCoin === coin
-                            ? "bg-[#7c68a6] text-white"
-                            : "bg-[rgba(124,104,166,0.06)] text-zinc-400 hover:text-white border border-[rgba(124,104,166,0.1)]"
-                        }`}
-                      >
-                        {coin}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="p-5 rounded-xl bg-[rgba(124,104,166,0.04)] border border-[rgba(124,104,166,0.1)]">
-                    <p className="text-sm font-medium text-white mb-1">
-                      {cryptoLabels[cryptoCoin].name}
-                    </p>
-                    <p className="text-xs text-zinc-500 mb-4">
-                      Network: {cryptoLabels[cryptoCoin].network}
-                    </p>
-
-                    {/* Wallet address */}
-                    {getCryptoAddress() ? (
-                      <>
-                        {/* QR Code placeholder */}
-                        <div className="flex justify-center mb-4">
-                          <div className="w-40 h-40 rounded-xl bg-white p-3 flex items-center justify-center">
-                            <div className="w-full h-full bg-[rgba(124,104,166,0.08)] rounded-lg flex items-center justify-center border-2 border-dashed border-[rgba(124,104,166,0.2)]">
-                              <span className="text-xs text-zinc-400 text-center px-2">
-                                QR Code
-                              </span>
-                            </div>
+                  {getCryptoAddress() ? (
+                    <>
+                      <div className="flex justify-center mb-4">
+                        <div className="w-36 h-36 rounded-xl bg-white p-3 flex items-center justify-center border border-[#e8e5df]">
+                          <div className="w-full h-full rounded-lg flex items-center justify-center border-2 border-dashed border-[#e8e5df]">
+                            <span className="text-xs text-[#8c8579]">QR Code</span>
                           </div>
                         </div>
-
-                        {/* Address display */}
-                        <div className="flex items-center gap-2 p-3 rounded-lg bg-[rgba(0,0,0,0.3)] border border-[rgba(124,104,166,0.1)]">
-                          <code className="flex-1 text-xs text-zinc-300 break-all font-mono">
-                            {getCryptoAddress()}
-                          </code>
-                          <button
-                            onClick={() => copyAddress(getCryptoAddress())}
-                            className="shrink-0 p-2 rounded-lg hover:bg-[rgba(124,104,166,0.15)] transition-colors"
-                            title="Copy address"
-                          >
-                            <Copy className="h-4 w-4 text-[#9b8cc4]" />
-                          </button>
-                        </div>
-                        {copied && (
-                          <p className="text-xs text-[#9b8cc4] mt-2 text-center">
-                            Address copied to clipboard
-                          </p>
-                        )}
-
-                        <p className="text-xs text-zinc-500 mt-4 text-center">
-                          Send exactly ${tier!.price} worth of{" "}
-                          {cryptoCoin.toUpperCase()} to the address above.
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-sm text-zinc-500 text-center py-6">
-                        {cryptoCoin.toUpperCase()} wallet address not configured
-                        yet. Please contact support or choose another payment
-                        method.
+                      </div>
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-white border border-[#e8e5df]">
+                        <code className="flex-1 text-xs text-[#5a5550] break-all font-mono">{getCryptoAddress()}</code>
+                        <button
+                          onClick={() => copyAddress(getCryptoAddress())}
+                          className="shrink-0 p-2 rounded-lg hover:bg-[#f3f1ee] transition-colors"
+                        >
+                          <Copy className="h-4 w-4 text-[#6d28d9]" />
+                        </button>
+                      </div>
+                      {copied && <p className="text-xs text-[#6d28d9] mt-2 text-center">Copied!</p>}
+                      <p className="text-xs text-[#8c8579] mt-3 text-center">
+                        Send exactly ${tier!.price} worth of {cryptoCoin.toUpperCase()} to the address above.
                       </p>
-                    )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-[#8c8579] text-center py-6">
+                      {cryptoCoin.toUpperCase()} wallet not configured yet. Please contact support or choose another method.
+                    </p>
+                  )}
 
-                    <button
-                      onClick={handleSubmit}
-                      disabled={submitting}
-                      className="btn-primary w-full mt-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {submitting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                      {submitting
-                        ? "Processing..."
-                        : "I've sent the payment"}
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="btn-primary w-full mt-4 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                    {submitting ? "Processing..." : "I've sent the payment"}
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -538,13 +436,12 @@ function CheckoutContent() {
   );
 }
 
-/* ── Exported page with Suspense boundary ─────── */
 export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#9b8cc4]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
         </div>
       }
     >

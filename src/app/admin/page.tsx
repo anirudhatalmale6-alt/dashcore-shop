@@ -14,32 +14,19 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
     if (!nickname.trim() || !password.trim()) {
       setError("Please enter both nickname and password.");
       return;
     }
-
     setLoading(true);
-
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nickname: nickname.trim(),
-          password: password.trim(),
-        }),
+        body: JSON.stringify({ nickname: nickname.trim(), password: password.trim() }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Login failed.");
-        return;
-      }
-
-      // Store token and redirect
+      if (!res.ok) { setError(data.error || "Login failed."); return; }
       localStorage.setItem("dashcore_admin_token", data.token);
       localStorage.setItem("dashcore_admin_nickname", data.nickname);
       router.push("/admin/dashboard");
@@ -51,73 +38,55 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="bg-grid min-h-screen flex items-center justify-center px-4">
-      {/* Ambient glow */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[400px] w-[600px] rounded-full bg-[#7c68a6] opacity-[0.06] blur-[120px]" />
-      </div>
-
-      <div className="relative w-full max-w-md">
-        <div className="glass-card p-8 sm:p-10">
-          {/* Header */}
-          <div className="text-center mb-8">
+    <div className="min-h-screen flex items-center justify-center px-5 bg-[#faf9f7]">
+      <div className="w-full max-w-sm">
+        <div className="card-elevated p-8">
+          <div className="text-center mb-7">
             <div className="flex justify-center mb-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7c68a6] to-[#5a4a7a]">
-                <Lock className="h-7 w-7 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#6d28d9]">
+                <Lock className="h-6 w-6 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-            <p className="mt-2 text-sm text-zinc-500">
-              Sign in to manage your DashCore shop
-            </p>
+            <h1 className="text-xl font-bold font-[var(--font-display)]">Admin Panel</h1>
+            <p className="mt-1 text-sm text-[#8c8579]">Sign in to manage DashCore</p>
           </div>
 
-          {/* Error */}
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
-              <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="mb-5 p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2.5">
+              <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Nickname
-              </label>
+              <label className="block text-sm font-medium text-[#1a1625] mb-1.5">Nickname</label>
               <input
                 type="text"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="admin"
                 autoComplete="username"
-                className="w-full rounded-xl bg-[rgba(124,104,166,0.06)] border border-[rgba(124,104,166,0.15)] px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-[#7c68a6] focus:outline-none focus:ring-1 focus:ring-[#7c68a6] transition-all"
+                className="input-field"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-[#1a1625] mb-1.5">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
                 autoComplete="current-password"
-                className="w-full rounded-xl bg-[rgba(124,104,166,0.06)] border border-[rgba(124,104,166,0.15)] px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-[#7c68a6] focus:outline-none focus:ring-1 focus:ring-[#7c68a6] transition-all"
+                className="input-field"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Lock className="h-4 w-4" />
-              )}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>

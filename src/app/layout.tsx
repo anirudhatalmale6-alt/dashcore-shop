@@ -1,30 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "DashCore | Premium Streaming Infrastructure",
+  title: "DashCore | IPTV Platform Engine — License Renewal",
   description:
-    "High-performance IPTV middleware and streaming infrastructure for global platforms. Modular architecture, unmatched scale, and total security by DashCore Systems.",
+    "Renew your DashCore IPTV platform engine license. High-performance streaming infrastructure with full protocol coverage, advanced load balancing, and enterprise security.",
   keywords: [
     "IPTV middleware",
+    "streaming engine",
+    "DashCore license",
+    "IPTV platform",
     "streaming infrastructure",
-    "OTT platform",
-    "video streaming",
-    "DashCore",
   ],
   openGraph: {
-    title: "DashCore | Premium Streaming Infrastructure",
+    title: "DashCore | IPTV Platform Engine",
     description:
-      "High-performance IPTV middleware and streaming infrastructure for global platforms.",
+      "Renew your DashCore streaming engine license. Built for scale, engineered for reliability.",
     siteName: "DashCore",
     type: "website",
   },
@@ -36,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-[#0a0a14] text-white">
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full flex flex-col bg-[#faf9f7] text-[#1a1625]">
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
