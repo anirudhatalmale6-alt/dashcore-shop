@@ -23,17 +23,17 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "navbar-blur shadow-sm" : "bg-transparent"
+        scrolled ? "navbar-blur" : "navbar-dark"
       }`}
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9] text-white font-bold text-sm font-[var(--font-display)] transition-transform group-hover:scale-105">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] text-white font-bold text-sm transition-transform group-hover:scale-105">
               D
             </div>
-            <span className="text-base font-semibold tracking-tight font-[var(--font-display)]">
-              Dash<span className="text-[#6d28d9]">Core</span>
+            <span className={`text-base font-bold tracking-tight transition-colors ${scrolled ? "text-[#0f172a]" : "text-white"}`}>
+              Dash<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] to-[#06b6d4]">Core</span>
             </span>
           </Link>
 
@@ -42,7 +42,9 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm text-[#8c8579] font-medium transition-colors hover:text-[#1a1625]"
+                className={`text-sm font-medium transition-colors ${
+                  scrolled ? "text-[#64748b] hover:text-[#0f172a]" : "text-white/60 hover:text-white"
+                }`}
               >
                 {link.label}
               </Link>
@@ -52,19 +54,23 @@ export default function Navbar() {
               href="https://t.me/dashcore"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#8c8579] transition-colors hover:text-[#6d28d9]"
+              className={`transition-colors ${scrolled ? "text-[#64748b] hover:text-[#7c3aed]" : "text-white/60 hover:text-[#06b6d4]"}`}
               aria-label="Telegram"
             >
               <Send className="h-4 w-4" />
             </a>
 
-            <Link href="/pricing" className="btn-primary text-sm px-5 py-2">
+            <Link href="/pricing" className={`text-sm font-bold px-5 py-2 rounded-lg transition-all ${
+              scrolled
+                ? "bg-[#7c3aed] text-white hover:bg-[#6d28d9] shadow-sm"
+                : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
+            }`}>
               Renew License
             </Link>
           </nav>
 
           <button
-            className="md:hidden text-[#8c8579] hover:text-[#1a1625]"
+            className={`md:hidden transition-colors ${scrolled ? "text-[#64748b] hover:text-[#0f172a]" : "text-white/70 hover:text-white"}`}
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -74,35 +80,25 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden navbar-blur border-t border-[#e8e5df]">
+        <div className="md:hidden navbar-blur border-t border-[#e2e8f0]">
           <div className="px-5 py-4 space-y-3">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block text-sm text-[#8c8579] font-medium transition-colors hover:text-[#1a1625] py-2"
+                className="block text-sm text-[#64748b] font-medium hover:text-[#0f172a] py-2"
               >
                 {link.label}
               </Link>
             ))}
-            <div className="flex items-center gap-4 pt-2">
-              <a
-                href="https://t.me/dashcore"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#8c8579] transition-colors hover:text-[#6d28d9]"
-              >
-                <Send className="h-4 w-4" />
-              </a>
-              <Link
-                href="/pricing"
-                onClick={() => setMobileOpen(false)}
-                className="btn-primary text-sm px-5 py-2 inline-block"
-              >
-                Renew License
-              </Link>
-            </div>
+            <Link
+              href="/pricing"
+              onClick={() => setMobileOpen(false)}
+              className="btn-primary inline-block text-sm px-5 py-2 mt-2"
+            >
+              Renew License
+            </Link>
           </div>
         </div>
       )}

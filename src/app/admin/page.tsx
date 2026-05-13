@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
         <div className="card-elevated p-8">
           <div className="text-center mb-7">
             <div className="flex justify-center mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#6d28d9]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#7c3aed]">
                 <Lock className="h-6 w-6 text-white" />
               </div>
             </div>

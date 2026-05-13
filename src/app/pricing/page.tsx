@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, ArrowRight, Star, Zap } from "lucide-react";
+import { Check, ArrowRight, Star, Zap, Crown } from "lucide-react";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +14,12 @@ function periodLabel(period: string): string {
   }
 }
 
+const tierStyles = [
+  { badge: "badge-teal", badgeIcon: Zap, badgeText: "STARTER", accent: "text-[#06b6d4]" },
+  { badge: "badge-purple", badgeIcon: Star, badgeText: "POPULAR", accent: "text-[#7c3aed]" },
+  { badge: "badge-gold", badgeIcon: Crown, badgeText: "BEST VALUE", accent: "text-[#d97706]" },
+];
+
 export default async function PricingPage() {
   const tiers = await prisma.pricingTier.findMany({
     where: { active: true },
@@ -23,82 +29,80 @@ export default async function PricingPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="hero-gradient relative pt-28 pb-12 sm:pt-36 sm:pb-16">
-        <div className="relative mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#6d28d9]/8 border border-[#6d28d9]/15 px-4 py-1.5 mb-5">
-            <Zap className="h-3.5 w-3.5 text-[#6d28d9]" />
-            <span className="text-xs font-semibold text-[#6d28d9] tracking-wide uppercase font-[var(--font-display)]">
+      <section className="hero-dark relative pt-28 pb-14 sm:pt-36 sm:pb-18">
+        <div className="hero-grid" />
+        <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 mb-5">
+            <span className="h-2 w-2 rounded-full bg-[#06b6d4] pulse-dot" />
+            <span className="text-xs font-semibold text-[#06b6d4] tracking-wide uppercase">
               License Renewal
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight font-[var(--font-display)]">
-            Choose Your <span className="text-[#6d28d9]">License Duration</span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
+            Choose Your{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] to-[#06b6d4]">
+              License Duration
+            </span>
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-[#8c8579] leading-relaxed">
+          <p className="mx-auto mt-4 max-w-xl text-base text-white/45 leading-relaxed">
             Renew your DashCore platform engine license. Longer durations save more.
           </p>
         </div>
       </section>
 
       {/* Pricing Cards */}
-      <section className="pb-16 sm:pb-24 -mt-2">
+      <section className="pb-16 sm:pb-24 -mt-8 relative z-10">
         <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
             {tiers.map((tier, index) => {
-              const isBest = index === 2;
+              const isFeatured = index === 2;
+              const style = tierStyles[index] || tierStyles[0];
               const features: string[] = (() => {
                 try {
                   const raw = tier.features;
                   if (typeof raw === "string") return JSON.parse(raw);
                   if (Array.isArray(raw)) return raw;
                   return [];
-                } catch {
-                  return [];
-                }
+                } catch { return []; }
               })();
 
               return (
                 <div
                   key={tier.id}
-                  className={`relative flex flex-col rounded-2xl p-7 sm:p-8 transition-all ${
-                    isBest
-                      ? "bg-[#1a1625] text-white ring-2 ring-[#6d28d9] shadow-xl shadow-[#6d28d9]/10 scale-[1.02] md:scale-105"
-                      : "card-elevated"
-                  }`}
+                  className={`relative flex flex-col ${
+                    isFeatured ? "card-featured" : "card"
+                  } p-7 sm:p-8`}
                 >
-                  {isBest && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6d28d9] px-4 py-1 text-[10px] font-bold text-white uppercase tracking-wider font-[var(--font-display)]">
-                        <Star className="h-3 w-3" />
-                        Best Value
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="mb-5">
-                    <h3 className={`text-base font-semibold font-[var(--font-display)] ${isBest ? "text-white" : "text-[#1a1625]"}`}>
-                      {tier.name}
-                    </h3>
-                    <p className={`text-xs mt-0.5 ${isBest ? "text-[#a78bfa]" : "text-[#8c8579]"}`}>
-                      {periodLabel(tier.period)} license
-                    </p>
+                  {/* Badge */}
+                  <div className="flex items-center justify-between mb-5">
+                    <span className={style.badge}>
+                      {style.badgeText}
+                    </span>
+                    <style.badgeIcon className={`h-5 w-5 ${style.accent} opacity-40`} />
                   </div>
 
-                  <div className="flex items-baseline gap-1 mb-6">
-                    <span className={`text-4xl font-bold font-[var(--font-display)] ${isBest ? "text-white" : "text-[#1a1625]"}`}>
+                  <h3 className="text-xl font-extrabold text-[#0f172a]">
+                    {tier.name}
+                  </h3>
+                  <p className="text-xs text-[#64748b] mt-0.5">
+                    {periodLabel(tier.period)} license
+                  </p>
+
+                  <div className="flex items-baseline gap-1 mt-4 mb-6">
+                    <span className="text-4xl font-extrabold text-[#0f172a]">
                       ${Number(tier.price)}
                     </span>
-                    <span className={`text-sm ${isBest ? "text-[#a78bfa]" : "text-[#8c8579]"}`}>
+                    <span className="text-sm text-[#94a3b8]">
                       /{periodLabel(tier.period)}
                     </span>
                   </div>
 
-                  <div className={`border-t mb-5 ${isBest ? "border-white/10" : "border-[#e8e5df]"}`} />
+                  <div className="border-t border-[#e2e8f0] mb-5" />
 
                   <ul className="flex-1 space-y-2.5">
                     {features.map((feature: string, i: number) => (
-                      <li key={i} className={`flex items-start gap-2.5 text-sm ${isBest ? "text-[#d1d5db]" : "text-[#5a5550]"}`}>
-                        <Check className={`h-4 w-4 shrink-0 mt-0.5 ${isBest ? "text-[#a78bfa]" : "text-[#6d28d9]"}`} />
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-[#475569]">
+                        <Check className="h-4 w-4 shrink-0 mt-0.5 text-[#06b6d4]" />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -107,9 +111,9 @@ export default async function PricingPage() {
                   <div className="mt-7">
                     <Link
                       href={`/checkout?tier=${tier.id}`}
-                      className={`flex items-center justify-center gap-2 w-full rounded-lg py-3 px-6 font-semibold text-sm font-[var(--font-display)] transition-all ${
-                        isBest
-                          ? "bg-white text-[#1a1625] hover:bg-[#f3f1ee]"
+                      className={`flex items-center justify-center gap-2 w-full rounded-xl py-3.5 px-6 font-bold text-sm transition-all ${
+                        isFeatured
+                          ? "btn-glow"
                           : "btn-primary"
                       }`}
                     >
@@ -123,12 +127,12 @@ export default async function PricingPage() {
           </div>
 
           <div className="mt-10 text-center space-y-1.5">
-            <p className="text-sm text-[#8c8579]">
+            <p className="text-sm text-[#64748b]">
               All licenses include full platform access, SSL encryption, and 30-day money-back guarantee.
             </p>
-            <p className="text-sm text-[#8c8579]">
+            <p className="text-sm text-[#64748b]">
               Need a custom arrangement?{" "}
-              <Link href="/contact" className="text-[#6d28d9] hover:underline underline-offset-4 font-medium">
+              <Link href="/contact" className="text-[#7c3aed] hover:underline underline-offset-4 font-semibold">
                 Contact us
               </Link>
             </p>

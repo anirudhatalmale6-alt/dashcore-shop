@@ -154,7 +154,7 @@ function CheckoutContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#7c3aed]" />
       </div>
     );
   }
@@ -193,9 +193,9 @@ function CheckoutContent() {
           <p className="text-[#8c8579] mb-2">
             Your order is pending payment confirmation.
           </p>
-          <div className="my-5 p-4 rounded-xl bg-[#6d28d9]/5 border border-[#6d28d9]/15">
+          <div className="my-5 p-4 rounded-xl bg-[#7c3aed]/5 border border-[#7c3aed]/15">
             <p className="text-xs text-[#8c8579] uppercase tracking-wider mb-1 font-medium">Order ID</p>
-            <p className="text-2xl font-mono font-bold text-[#6d28d9]">#{orderId}</p>
+            <p className="text-2xl font-mono font-bold text-[#7c3aed]">#{orderId}</p>
           </div>
           <p className="text-sm text-[#8c8579] mb-6">
             {paymentTab === "crypto"
@@ -251,7 +251,7 @@ function CheckoutContent() {
                 <ul className="space-y-1.5">
                   {tier!.features.slice(0, 5).map((f: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-[#5a5550]">
-                      <span className="mt-1.5 block h-1 w-1 shrink-0 rounded-full bg-[#6d28d9]" />
+                      <span className="mt-1.5 block h-1 w-1 shrink-0 rounded-full bg-[#7c3aed]" />
                       {f}
                     </li>
                   ))}
@@ -319,7 +319,7 @@ function CheckoutContent() {
                     disabled={!method.enabled}
                     className={`flex flex-col items-center gap-1.5 rounded-lg py-3 px-3 text-xs font-medium transition-all border ${
                       paymentTab === method.key
-                        ? "bg-[#6d28d9]/8 border-[#6d28d9] text-[#6d28d9]"
+                        ? "bg-[#7c3aed]/8 border-[#7c3aed] text-[#7c3aed]"
                         : method.enabled
                         ? "bg-white border-[#e8e5df] text-[#8c8579] hover:border-[#d4d0c8] hover:text-[#1a1625]"
                         : "bg-[#f3f1ee] border-[#e8e5df] text-[#c5c0b8] cursor-not-allowed"
@@ -376,7 +376,7 @@ function CheckoutContent() {
                       onClick={() => setCryptoCoin(coin)}
                       className={`rounded-lg py-2 px-3 text-xs font-semibold uppercase transition-all border ${
                         cryptoCoin === coin
-                          ? "bg-[#6d28d9] text-white border-[#6d28d9]"
+                          ? "bg-[#7c3aed] text-white border-[#7c3aed]"
                           : "bg-white text-[#8c8579] border-[#e8e5df] hover:border-[#d4d0c8]"
                       }`}
                     >
@@ -404,10 +404,10 @@ function CheckoutContent() {
                           onClick={() => copyAddress(getCryptoAddress())}
                           className="shrink-0 p-2 rounded-lg hover:bg-[#f3f1ee] transition-colors"
                         >
-                          <Copy className="h-4 w-4 text-[#6d28d9]" />
+                          <Copy className="h-4 w-4 text-[#7c3aed]" />
                         </button>
                       </div>
-                      {copied && <p className="text-xs text-[#6d28d9] mt-2 text-center">Copied!</p>}
+                      {copied && <p className="text-xs text-[#7c3aed] mt-2 text-center">Copied!</p>}
                       <p className="text-xs text-[#8c8579] mt-3 text-center">
                         Send exactly ${tier!.price} worth of {cryptoCoin.toUpperCase()} to the address above.
                       </p>
@@ -441,7 +441,7 @@ export default function CheckoutPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#7c3aed]" />
         </div>
       }
     >

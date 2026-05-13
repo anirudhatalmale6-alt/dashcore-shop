@@ -274,7 +274,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#7c3aed]" />
       </div>
     );
   }
@@ -318,8 +318,8 @@ export default function AdminDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="card-elevated p-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#6d28d9]/8">
-              <ShoppingCart className="h-5 w-5 text-[#6d28d9]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7c3aed]/8">
+              <ShoppingCart className="h-5 w-5 text-[#7c3aed]" />
             </div>
             <div>
               <p className="text-xs text-[#8c8579] uppercase tracking-wider font-medium">Total Orders</p>
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-[1px] font-[var(--font-display)] ${
                 activeTab === tab.key
-                  ? "border-[#6d28d9] text-[#6d28d9]"
+                  ? "border-[#6d28d9] text-[#7c3aed]"
                   : "border-transparent text-[#8c8579] hover:text-[#1a1625]"
               }`}
             >
@@ -384,7 +384,7 @@ export default function AdminDashboard() {
             </div>
 
             {ordersLoading ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#6d28d9]" /></div>
+              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#7c3aed]" /></div>
             ) : orders.length === 0 ? (
               <div className="card-elevated p-10 text-center">
                 <ShoppingCart className="h-10 w-10 text-[#d4d0c8] mx-auto mb-3" />
@@ -456,7 +456,7 @@ export default function AdminDashboard() {
         {activeTab === "product" && (
           <div>
             {productLoading ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#6d28d9]" /></div>
+              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#7c3aed]" /></div>
             ) : !product ? (
               <div className="card-elevated p-10 text-center">
                 <Package className="h-10 w-10 text-[#d4d0c8] mx-auto mb-3" />
@@ -491,11 +491,11 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-sm font-semibold font-[var(--font-display)]">
                             {tier.name || "Unnamed"}
-                            {!tier.id && <span className="ml-2 text-xs text-[#6d28d9]">(New)</span>}
+                            {!tier.id && <span className="ml-2 text-xs text-[#7c3aed]">(New)</span>}
                           </h4>
                           <div className="flex items-center gap-3">
                             <label className="flex items-center gap-2 text-xs text-[#8c8579] cursor-pointer">
-                              <input type="checkbox" checked={tier.active} onChange={(e) => updateTier(index, "active", e.target.checked)} className="rounded border-[#d4d0c8] text-[#6d28d9] focus:ring-[#6d28d9]" />
+                              <input type="checkbox" checked={tier.active} onChange={(e) => updateTier(index, "active", e.target.checked)} className="rounded border-[#d4d0c8] text-[#7c3aed] focus:ring-[#6d28d9]" />
                               Active
                             </label>
                             <button onClick={() => removeTier(index)} className="text-[#8c8579] hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
@@ -551,7 +551,7 @@ export default function AdminDashboard() {
         {activeTab === "settings" && (
           <div>
             {settingsLoading ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#6d28d9]" /></div>
+              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#7c3aed]" /></div>
             ) : !settings ? (
               <div className="card-elevated p-10 text-center">
                 <Settings className="h-10 w-10 text-[#d4d0c8] mx-auto mb-3" />
@@ -591,7 +591,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold font-[var(--font-display)]">Stripe</h3>
                     <label className="flex items-center gap-2 text-sm text-[#8c8579] cursor-pointer">
-                      <input type="checkbox" checked={settings.stripeEnabled} onChange={(e) => setSettings({ ...settings, stripeEnabled: e.target.checked })} className="rounded border-[#d4d0c8] text-[#6d28d9] focus:ring-[#6d28d9]" />
+                      <input type="checkbox" checked={settings.stripeEnabled} onChange={(e) => setSettings({ ...settings, stripeEnabled: e.target.checked })} className="rounded border-[#d4d0c8] text-[#7c3aed] focus:ring-[#6d28d9]" />
                       Enabled
                     </label>
                   </div>
@@ -612,7 +612,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold font-[var(--font-display)]">MultiSafepay</h3>
                     <label className="flex items-center gap-2 text-sm text-[#8c8579] cursor-pointer">
-                      <input type="checkbox" checked={settings.multisafepayEnabled} onChange={(e) => setSettings({ ...settings, multisafepayEnabled: e.target.checked })} className="rounded border-[#d4d0c8] text-[#6d28d9] focus:ring-[#6d28d9]" />
+                      <input type="checkbox" checked={settings.multisafepayEnabled} onChange={(e) => setSettings({ ...settings, multisafepayEnabled: e.target.checked })} className="rounded border-[#d4d0c8] text-[#7c3aed] focus:ring-[#6d28d9]" />
                       Enabled
                     </label>
                   </div>
@@ -627,7 +627,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold font-[var(--font-display)]">Cryptocurrency</h3>
                     <label className="flex items-center gap-2 text-sm text-[#8c8579] cursor-pointer">
-                      <input type="checkbox" checked={settings.cryptoEnabled} onChange={(e) => setSettings({ ...settings, cryptoEnabled: e.target.checked })} className="rounded border-[#d4d0c8] text-[#6d28d9] focus:ring-[#6d28d9]" />
+                      <input type="checkbox" checked={settings.cryptoEnabled} onChange={(e) => setSettings({ ...settings, cryptoEnabled: e.target.checked })} className="rounded border-[#d4d0c8] text-[#7c3aed] focus:ring-[#6d28d9]" />
                       Enabled
                     </label>
                   </div>
