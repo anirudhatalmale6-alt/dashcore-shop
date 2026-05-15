@@ -189,14 +189,12 @@ export default function CmsInstancesPage() {
     if (!form.name.trim() || !form.dns.trim() || !form.admin_email.trim()) return;
     setCreating(true);
     try {
-      const suffix = Math.random().toString(36).slice(2, 8);
-      const username = form.admin_username === "admin" ? `admin_${suffix}` : form.admin_username;
       const payload = {
         name: form.name,
         dns: form.dns,
         subdomain: form.subdomain,
         subscription_plan: form.subscription_plan,
-        adminUsername: username,
+        adminUsername: form.admin_username,
         adminEmail: form.admin_email,
         adminPassword: form.admin_password || undefined,
       };

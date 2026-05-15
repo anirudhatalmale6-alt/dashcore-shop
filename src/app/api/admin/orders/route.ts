@@ -42,7 +42,6 @@ async function createCmsInstance(order: {
   const subdomain = `${slug}-${suffix}`;
   const domain = `${subdomain}.dashcore.eu`;
 
-  const adminUsername = `admin_${suffix}`;
   const adminEmail = `admin_${suffix}@${subdomain}.dashcore.eu`;
 
   const res = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
@@ -57,7 +56,7 @@ async function createCmsInstance(order: {
       dns: domain,
       subdomain,
       subscription_plan: subscriptionPlan,
-      adminUsername,
+      adminUsername: "admin",
       adminEmail,
       adminPassword: adminPassword,
     }),
@@ -68,7 +67,7 @@ async function createCmsInstance(order: {
     return { error: `CMS API responded ${res.status}: ${JSON.stringify(data)}` };
   }
   const cmsData = data.data || data;
-  return { unique_id: cmsData.unique_id || cmsData.id, adminUsername, adminPassword, domain };
+  return { unique_id: cmsData.unique_id || cmsData.id, adminUsername: "admin", adminPassword, domain };
 }
 
 export async function GET(request: NextRequest) {
