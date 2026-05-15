@@ -64,6 +64,64 @@ interface SettingsData {
   socialLinks: SocialLink[];
 }
 
+function SmtpTester({ token }: { token: string | null }) {
+  const [testEmail, setTestEmail] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const runTest = async (sendTo?: string) => {
+    setTesting(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ to: sendTo || "" }),
+      });
+      const data = await res.json();
+      setResult({ ok: data.success, msg: data.message || data.error || "Unknown result" });
+    } catch {
+      setResult({ ok: false, msg: "Request failed" });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1.5">Test SMTP</label>
+      <div className="flex gap-2">
+        <button
+          onClick={() => runTest()}
+          disabled={testing}
+          className="px-3 py-2 text-xs font-medium bg-[#f1f5f9] text-[#64748b] border border-[#e2e8f0] rounded-lg hover:bg-[#e2e8f0] transition-colors disabled:opacity-50"
+        >
+          {testing ? "Testing..." : "Test Connection"}
+        </button>
+        <input
+          type="email"
+          value={testEmail}
+          onChange={(e) => setTestEmail(e.target.value)}
+          placeholder="Send test to email..."
+          className="input-field flex-1 text-sm"
+        />
+        <button
+          onClick={() => runTest(testEmail)}
+          disabled={testing || !testEmail}
+          className="px-3 py-2 text-xs font-medium bg-[#7c3aed] text-white rounded-lg hover:bg-[#6d28d9] transition-colors disabled:opacity-50"
+        >
+          Send Test
+        </button>
+      </div>
+      {result && (
+        <p className={`mt-2 text-xs font-medium ${result.ok ? "text-emerald-600" : "text-red-600"}`}>
+          {result.ok ? "OK" : "FAILED"}: {result.msg}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function AdminSettingsPage() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
@@ -372,6 +430,9 @@ export default function AdminSettingsPage() {
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium mb-1.5">From Address</label>
                 <input type="email" value={s.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} placeholder="noreply@dashcore.eu" className="input-field" />
+              </div>
+              <div className="sm:col-span-2 pt-2 border-t border-[#e2e8f0]">
+                <SmtpTester token={token} />
               </div>
             </div>
           </div>

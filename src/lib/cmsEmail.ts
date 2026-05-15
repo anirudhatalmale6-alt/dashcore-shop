@@ -3,14 +3,35 @@ import { prisma } from "@/lib/db";
 
 async function getSmtpTransport() {
   const settings = await prisma.siteSettings.findUnique({ where: { id: 1 } });
-  if (!settings?.smtpHost || !settings.smtpUser) return null;
+  if (!settings?.smtpHost || !settings.smtpUser) {
+    console.error("SMTP not configured: missing smtpHost or smtpUser in site settings");
+    return null;
+  }
+
+  console.log(`SMTP config: host=${settings.smtpHost} port=${settings.smtpPort} user=${settings.smtpUser} secure=${settings.smtpPort === 465}`);
 
   return nodemailer.createTransport({
     host: settings.smtpHost,
     port: settings.smtpPort,
     secure: settings.smtpPort === 465,
     auth: { user: settings.smtpUser, pass: settings.smtpPass },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
+}
+
+export async function testSmtpConnection(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const transport = await getSmtpTransport();
+    if (!transport) return { ok: false, error: "SMTP not configured" };
+    await transport.verify();
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("SMTP verification failed:", msg);
+    return { ok: false, error: msg };
+  }
 }
 
 async function getFromAddress(): Promise<string> {
