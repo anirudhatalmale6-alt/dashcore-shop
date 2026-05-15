@@ -85,11 +85,23 @@ function CheckoutContent() {
 
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [paymentTab, setPaymentTab] = useState<PaymentTab>("stripe");
   const [cryptoCoin, setCryptoCoin] = useState<CryptoCoin>("btc");
 
   const [orderId, setOrderId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("customer_token");
+    const savedName = localStorage.getItem("customer_name");
+    const savedEmail = localStorage.getItem("customer_email");
+    if (token && savedName && savedEmail) {
+      setCustomerName(savedName);
+      setCustomerEmail(savedEmail);
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -321,20 +333,30 @@ function CheckoutContent() {
             )}
 
             <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94a3b8]" />
-                  <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" className="input-field pl-10" />
+              {isLoggedIn && (
+                <div className="p-3 rounded-lg bg-[#f0f0ff] border border-[#c7d2fe] text-sm text-[#4338ca] flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                  Ordering as <strong>{customerName}</strong> ({customerEmail})
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94a3b8]" />
-                  <input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="john@example.com" className="input-field pl-10" />
-                </div>
-              </div>
+              )}
+              {!isLoggedIn && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94a3b8]" />
+                      <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" className="input-field pl-10" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Email Address</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94a3b8]" />
+                      <input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="john@example.com" className="input-field pl-10" />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="mb-5">

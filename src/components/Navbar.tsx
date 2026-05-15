@@ -129,9 +129,15 @@ export default function Navbar() {
               </Link>
             )}
 
-            <Link href="/pricing" className="btn-primary text-sm !py-2.5 !px-6">
-              Get Started
-            </Link>
+            {customerName ? (
+              <Link href="/account" className="btn-primary text-sm !py-2.5 !px-6">
+                Dashboard
+              </Link>
+            ) : (
+              <Link href="/pricing" className="btn-primary text-sm !py-2.5 !px-6">
+                Get Started
+              </Link>
+            )}
           </nav>
 
           <button
@@ -176,13 +182,23 @@ export default function Navbar() {
                 Sign In
               </Link>
             )}
-            <Link
-              href="/pricing"
-              onClick={() => setMobileOpen(false)}
-              className="btn-primary inline-block text-sm !px-6 !py-2.5 mt-2"
-            >
-              Get Started
-            </Link>
+            {customerName ? (
+              <Link
+                href="/account"
+                onClick={() => setMobileOpen(false)}
+                className="btn-primary inline-block text-sm !px-6 !py-2.5 mt-2"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/pricing"
+                onClick={() => setMobileOpen(false)}
+                className="btn-primary inline-block text-sm !px-6 !py-2.5 mt-2"
+              >
+                Get Started
+              </Link>
+            )}
           </div>
         </div>
       )}
