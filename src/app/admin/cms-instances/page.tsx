@@ -283,6 +283,13 @@ export default function CmsInstancesPage() {
     i.unique_id.toLowerCase().includes(search.toLowerCase())
   );
 
+  const PER_PAGE = 10;
+  const [cmsPage, setCmsPage] = useState(1);
+  const totalCmsPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginatedInstances = filtered.slice((cmsPage - 1) * PER_PAGE, cmsPage * PER_PAGE);
+
+  useEffect(() => { setCmsPage(1); }, [search]);
+
   const activeCount = instances.filter((i) => i.active).length;
   const inactiveCount = instances.filter((i) => !i.active).length;
 
@@ -358,7 +365,7 @@ export default function CmsInstancesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inst) => (
+              {paginatedInstances.map((inst) => (
                 <tr key={inst.id} className="border-b border-[#f1f5f9] hover:bg-[#fafbfc] transition-colors">
                   <td className="px-4 py-3 font-medium text-[#0f172a]">{inst.name}</td>
                   <td className="px-4 py-3">
@@ -408,6 +415,33 @@ export default function CmsInstancesPage() {
               ))}
             </tbody>
           </table>
+        )}
+
+        {!loading && filtered.length > PER_PAGE && (
+          <div className="flex items-center justify-between px-5 py-3 border-t border-[#e2e8f0]">
+            <p className="text-xs text-[#94a3b8]">
+              Showing {(cmsPage - 1) * PER_PAGE + 1}–{Math.min(cmsPage * PER_PAGE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setCmsPage(Math.max(1, cmsPage - 1))}
+                disabled={cmsPage <= 1}
+                className="p-2 rounded-lg border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] disabled:opacity-40 transition-all"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="flex items-center px-3 text-xs text-[#64748b] font-medium">
+                {cmsPage} / {totalCmsPages}
+              </span>
+              <button
+                onClick={() => setCmsPage(Math.min(totalCmsPages, cmsPage + 1))}
+                disabled={cmsPage >= totalCmsPages}
+                className="p-2 rounded-lg border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] disabled:opacity-40 transition-all"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

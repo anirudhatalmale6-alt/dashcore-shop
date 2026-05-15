@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAdminFromRequest } from "@/lib/adminAuth";
+import { sendCmsReadyEmail } from "@/lib/cmsEmail";
 import { PaymentStatus } from "@prisma/client";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 const CMS_BACKEND_URL = process.env.CMS_BACKEND_URL || "https://backend.dashcore.eu";
 const CMS_API_KEY = process.env.CMS_API_KEY || "";
@@ -31,13 +33,14 @@ async function createCmsInstance(order: {
   customerName: string;
   customerEmail: string;
   tierName: string;
-}): Promise<{ unique_id?: string; adminPassword?: string; error?: string }> {
+}): Promise<{ unique_id?: string; adminPassword?: string; domain?: string; error?: string }> {
   const subscriptionPlan = await mapTierToSubscriptionPlan(order.tierName);
   const adminPassword = generatePassword(12);
 
   const slug = order.customerName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 20) || "cms";
   const suffix = crypto.randomBytes(3).toString("hex");
   const subdomain = `${slug}-${suffix}`;
+  const domain = `${subdomain}.dashcore.eu`;
 
   const res = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
     method: "POST",
@@ -48,7 +51,7 @@ async function createCmsInstance(order: {
     },
     body: JSON.stringify({
       name: order.customerName,
-      dns: `${subdomain}.dashcore.eu`,
+      dns: domain,
       subdomain,
       subscription_plan: subscriptionPlan,
       adminUsername: "admin",
@@ -62,7 +65,7 @@ async function createCmsInstance(order: {
     return { error: `CMS API responded ${res.status}: ${JSON.stringify(data)}` };
   }
   const cmsData = data.data || data;
-  return { unique_id: cmsData.unique_id || cmsData.id, adminPassword };
+  return { unique_id: cmsData.unique_id || cmsData.id, adminPassword, domain };
 }
 
 export async function GET(request: NextRequest) {
@@ -189,6 +192,21 @@ export async function PATCH(request: NextRequest) {
             data: { notes: newNotes },
           });
           console.log(`CMS instance created for order ${existing.orderId}: ${result.unique_id}`);
+
+          // Send CMS ready email to customer
+          try {
+            await sendCmsReadyEmail({
+              email: existing.customerEmail,
+              name: existing.customerName,
+              cmsId: result.unique_id,
+              domain: result.domain || "dashcore.eu",
+              adminUsername: "admin",
+              adminPassword: result.adminPassword || "N/A",
+            });
+            console.log(`CMS ready email sent to ${existing.customerEmail}`);
+          } catch (emailErr) {
+            console.error(`Failed to send CMS ready email:`, emailErr);
+          }
         } else {
           cmsError = result.error || "No unique_id returned";
           console.error(`CMS creation failed for order ${existing.orderId}:`, cmsError);
@@ -196,6 +214,29 @@ export async function PATCH(request: NextRequest) {
       } catch (err) {
         cmsError = err instanceof Error ? err.message : String(err);
         console.error(`CMS creation error for order ${existing.orderId}:`, cmsError);
+      }
+    }
+
+    // Auto-create customer account when order is newly confirmed as paid
+    if (status === "paid" && existing.paymentStatus !== "paid") {
+      try {
+        const existingCustomer = await prisma.customer.findUnique({
+          where: { email: existing.customerEmail },
+        });
+        if (!existingCustomer) {
+          const customerPassword = generatePassword(10);
+          const passwordHash = await bcrypt.hash(customerPassword, 10);
+          await prisma.customer.create({
+            data: {
+              email: existing.customerEmail,
+              name: existing.customerName,
+              passwordHash,
+            },
+          });
+          console.log(`Customer account created for ${existing.customerEmail}`);
+        }
+      } catch (custErr) {
+        console.error(`Customer creation error:`, custErr);
       }
     }
 

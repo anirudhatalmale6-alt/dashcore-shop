@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { PaymentMethod, CryptoCurrency } from "@prisma/client";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 const ORDER_ID_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
@@ -93,6 +95,27 @@ export async function POST(request: NextRequest) {
         selectedOptions: selectedOptions || undefined,
       },
     });
+
+    // Auto-create customer account if not exists
+    try {
+      const existingCustomer = await prisma.customer.findUnique({
+        where: { email: customerEmail.trim() },
+      });
+      if (!existingCustomer) {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        const rawPassword = Array.from(crypto.randomBytes(10), (b) => chars[b % chars.length]).join("");
+        const passwordHash = await bcrypt.hash(rawPassword, 10);
+        await prisma.customer.create({
+          data: {
+            email: customerEmail.trim(),
+            name: customerName.trim(),
+            passwordHash,
+          },
+        });
+      }
+    } catch (custErr) {
+      console.error("Customer auto-creation error (non-fatal):", custErr);
+    }
 
     return NextResponse.json(
       {
