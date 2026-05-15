@@ -43,6 +43,7 @@ async function createCmsInstance(order: {
   const domain = `${subdomain}.dashcore.eu`;
 
   const adminUsername = `admin_${suffix}`;
+  const adminEmail = `admin_${suffix}@${subdomain}.dashcore.eu`;
 
   const res = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
     method: "POST",
@@ -57,7 +58,7 @@ async function createCmsInstance(order: {
       subdomain,
       subscription_plan: subscriptionPlan,
       adminUsername,
-      adminEmail: order.customerEmail,
+      adminEmail,
       adminPassword: adminPassword,
     }),
   });
