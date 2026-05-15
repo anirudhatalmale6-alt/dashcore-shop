@@ -15,6 +15,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Server,
 } from "lucide-react";
 
 interface Order {
@@ -199,6 +200,37 @@ function OrderDetailModal({ order, onClose, onStatusChange }: {
             </div>
           </div>
 
+          {/* CMS Instance Info (parsed from notes) */}
+          {order.notes && order.notes.includes("[CMS Auto-Created]") && (() => {
+            const match = order.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/);
+            if (!match) return null;
+            const [, cmsId, adminUser, adminPass] = match;
+            return (
+              <div className="border-2 border-[#7c3aed]/30 rounded-xl overflow-hidden bg-[#7c3aed]/5">
+                <div className="bg-[#7c3aed]/10 px-5 py-3 border-b border-[#7c3aed]/20 flex items-center gap-2">
+                  <Server className="h-4 w-4 text-[#7c3aed]" />
+                  <p className="text-xs font-semibold text-[#7c3aed] uppercase tracking-wider">CMS Instance Created</p>
+                </div>
+                <div className="px-5 py-4 space-y-3">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Instance ID</p>
+                      <p className="text-sm font-mono font-bold text-[#7c3aed]">{cmsId}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Admin User</p>
+                      <p className="text-sm font-medium">{adminUser}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Admin Password</p>
+                      <p className="text-sm font-mono bg-white px-2 py-0.5 rounded border border-[#e2e8f0] inline-block">{adminPass}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {order.notes && (
             <div className="border border-[#e2e8f0] rounded-xl overflow-hidden">
               <div className="bg-[#f8fafc] px-5 py-3 border-b border-[#e2e8f0]">
@@ -269,14 +301,23 @@ export default function AdminOrdersPage() {
   const updateStatus = async (orderId: number, status: string) => {
     try {
       const res = await apiFetch("/api/admin/orders", { method: "PATCH", body: JSON.stringify({ orderId, status }) });
+      const data = await res.json();
       if (res.ok) {
-        flash("success", `Order marked as ${status}`);
+        const msg = data.cmsWarning
+          ? `Order marked as ${status}. Warning: ${data.cmsWarning}`
+          : `Order marked as ${status}`;
+        flash(data.cmsWarning ? "error" : "success", msg);
         loadOrders();
         if (detailOrder && detailOrder.id === orderId) {
-          setDetailOrder({ ...detailOrder, paymentStatus: status });
+          setDetailOrder({
+            ...detailOrder,
+            paymentStatus: data.paymentStatus || status,
+            notes: data.notes || detailOrder.notes,
+            confirmedAt: data.confirmedAt || detailOrder.confirmedAt,
+            updatedAt: data.updatedAt || detailOrder.updatedAt,
+          });
         }
       } else {
-        const data = await res.json();
         flash("error", data.error || "Failed");
       }
     } catch { flash("error", "Failed to update order"); }

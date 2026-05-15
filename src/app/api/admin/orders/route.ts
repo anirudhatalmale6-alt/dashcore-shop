@@ -31,9 +31,13 @@ async function createCmsInstance(order: {
   customerName: string;
   customerEmail: string;
   tierName: string;
-}): Promise<{ unique_id?: string; error?: string }> {
+}): Promise<{ unique_id?: string; adminPassword?: string; error?: string }> {
   const subscriptionPlan = await mapTierToSubscriptionPlan(order.tierName);
   const adminPassword = generatePassword(12);
+
+  const slug = order.customerName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 20) || "cms";
+  const suffix = crypto.randomBytes(3).toString("hex");
+  const subdomain = `${slug}-${suffix}`;
 
   const res = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
     method: "POST",
@@ -44,12 +48,12 @@ async function createCmsInstance(order: {
     },
     body: JSON.stringify({
       name: order.customerName,
-      dns: "",
-      subdomain: "",
+      dns: `${subdomain}.dashcore.eu`,
+      subdomain,
       subscription_plan: subscriptionPlan,
-      admin_username: "admin",
-      admin_email: order.customerEmail,
-      admin_password: adminPassword,
+      adminUsername: "admin",
+      adminEmail: order.customerEmail,
+      adminPassword: adminPassword,
     }),
   });
 
@@ -57,7 +61,8 @@ async function createCmsInstance(order: {
   if (!res.ok) {
     return { error: `CMS API responded ${res.status}: ${JSON.stringify(data)}` };
   }
-  return { unique_id: data.unique_id || data.id };
+  const cmsData = data.data || data;
+  return { unique_id: cmsData.unique_id || cmsData.id, adminPassword };
 }
 
 export async function GET(request: NextRequest) {
@@ -173,7 +178,7 @@ export async function PATCH(request: NextRequest) {
         });
 
         if (result.unique_id) {
-          const cmsNote = `[CMS Auto-Created] ID: ${result.unique_id}`;
+          const cmsNote = `[CMS Auto-Created] ID: ${result.unique_id} | Admin: admin / ${result.adminPassword || "N/A"}`;
           const existingNotes = updated.notes || "";
           const newNotes = existingNotes
             ? `${existingNotes}\n${cmsNote}`
