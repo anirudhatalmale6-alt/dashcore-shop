@@ -225,6 +225,22 @@ export default function CmsInstancesPage() {
 
   const handleToggleActive = async (id: number, currentActive: number) => {
     await proxy(`/api/v1/cms/${id}`, "PATCH", { active: currentActive ? 0 : 1 });
+    const inst = instances.find((i) => i.id === id);
+    if (inst) {
+      try {
+        await fetch("/api/admin/notify-cms-status", {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({
+            cmsId: inst.unique_id,
+            domain: inst.dns,
+            action: currentActive ? "deactivated" : "reactivated",
+          }),
+        });
+      } catch {
+        // notification is best-effort
+      }
+    }
     fetchInstances();
     if (detail?.id === id) openDetail(id);
   };
