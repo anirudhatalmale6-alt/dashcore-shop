@@ -202,9 +202,13 @@ function OrderDetailModal({ order, onClose, onStatusChange }: {
 
           {/* CMS Instance Info (parsed from notes) */}
           {order.notes && order.notes.includes("[CMS Auto-Created]") && (() => {
-            const match = order.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/);
-            if (!match) return null;
-            const [, cmsId, adminUser, adminPass] = match;
+            const newMatch = order.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Domain: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/);
+            const oldMatch = !newMatch ? order.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/) : null;
+            const cmsId = newMatch?.[1] || oldMatch?.[1];
+            const domain = newMatch?.[2] || null;
+            const adminUser = newMatch?.[3] || oldMatch?.[2];
+            const adminPass = newMatch?.[4] || oldMatch?.[3];
+            if (!cmsId) return null;
             return (
               <div className="border-2 border-[#7c3aed]/30 rounded-xl overflow-hidden bg-[#7c3aed]/5">
                 <div className="bg-[#7c3aed]/10 px-5 py-3 border-b border-[#7c3aed]/20 flex items-center gap-2">
@@ -212,11 +216,17 @@ function OrderDetailModal({ order, onClose, onStatusChange }: {
                   <p className="text-xs font-semibold text-[#7c3aed] uppercase tracking-wider">CMS Instance Created</p>
                 </div>
                 <div className="px-5 py-4 space-y-3">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Instance ID</p>
                       <p className="text-sm font-mono font-bold text-[#7c3aed]">{cmsId}</p>
                     </div>
+                    {domain && (
+                      <div>
+                        <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Domain</p>
+                        <p className="text-sm font-medium">{domain}</p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Admin User</p>
                       <p className="text-sm font-medium">{adminUser}</p>

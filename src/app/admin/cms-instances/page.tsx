@@ -120,6 +120,11 @@ export default function CmsInstancesPage() {
   const [savingDns, setSavingDns] = useState(false);
   const [dnsSaved, setDnsSaved] = useState(false);
 
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordSaved, setPasswordSaved] = useState(false);
+
   // Renew license state
   const [renewMonths, setRenewMonths] = useState(1);
   const [renewingLicense, setRenewingLicense] = useState(false);
@@ -268,6 +273,26 @@ export default function CmsInstancesPage() {
       }
     } finally {
       setRenewingLicense(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!detail || !newPassword.trim()) return;
+    setSavingPassword(true);
+    setPasswordSaved(false);
+    try {
+      const res = await proxy(`/api/v1/cms/${detail.id}`, "PATCH", { password: newPassword });
+      if (res.success || res.message === "CMS updated") {
+        setPasswordSaved(true);
+        setNewPassword("");
+        setTimeout(() => setPasswordSaved(false), 2500);
+      } else {
+        alert(res.error || res.message || "Failed to change password");
+      }
+    } catch {
+      alert("Failed to change password");
+    } finally {
+      setSavingPassword(false);
     }
   };
 
@@ -614,6 +639,41 @@ export default function CmsInstancesPage() {
                           </tbody>
                         </table>
                       )}
+
+                      {/* Change Admin Password */}
+                      <div className="border-t border-[#e2e8f0] mt-4 pt-4">
+                        <h3 className="text-sm font-semibold text-[#0f172a] mb-3 flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-[#7c3aed]" />
+                          Change Admin Password
+                        </h3>
+                        <div className="flex items-end gap-3">
+                          <div className="flex-1">
+                            <label className="block text-xs text-[#94a3b8] mb-1">New Password</label>
+                            <input
+                              type="text"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              placeholder="Enter new admin password"
+                              className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                            />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {passwordSaved && (
+                              <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium whitespace-nowrap">
+                                <CheckCircle className="h-3.5 w-3.5" /> Updated
+                              </span>
+                            )}
+                            <button
+                              onClick={handleChangePassword}
+                              disabled={savingPassword || !newPassword.trim()}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors whitespace-nowrap"
+                            >
+                              {savingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                              Update Password
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 

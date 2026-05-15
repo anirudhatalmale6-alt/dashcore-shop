@@ -33,7 +33,7 @@ async function createCmsInstance(order: {
   customerName: string;
   customerEmail: string;
   tierName: string;
-}): Promise<{ unique_id?: string; adminPassword?: string; domain?: string; error?: string }> {
+}): Promise<{ unique_id?: string; adminUsername?: string; adminPassword?: string; domain?: string; error?: string }> {
   const subscriptionPlan = await mapTierToSubscriptionPlan(order.tierName);
   const adminPassword = generatePassword(12);
 
@@ -41,6 +41,8 @@ async function createCmsInstance(order: {
   const suffix = crypto.randomBytes(3).toString("hex");
   const subdomain = `${slug}-${suffix}`;
   const domain = `${subdomain}.dashcore.eu`;
+
+  const adminUsername = `admin_${suffix}`;
 
   const res = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
     method: "POST",
@@ -54,7 +56,7 @@ async function createCmsInstance(order: {
       dns: domain,
       subdomain,
       subscription_plan: subscriptionPlan,
-      adminUsername: "admin",
+      adminUsername,
       adminEmail: order.customerEmail,
       adminPassword: adminPassword,
     }),
@@ -65,7 +67,7 @@ async function createCmsInstance(order: {
     return { error: `CMS API responded ${res.status}: ${JSON.stringify(data)}` };
   }
   const cmsData = data.data || data;
-  return { unique_id: cmsData.unique_id || cmsData.id, adminPassword, domain };
+  return { unique_id: cmsData.unique_id || cmsData.id, adminUsername, adminPassword, domain };
 }
 
 export async function GET(request: NextRequest) {
@@ -181,7 +183,7 @@ export async function PATCH(request: NextRequest) {
         });
 
         if (result.unique_id) {
-          const cmsNote = `[CMS Auto-Created] ID: ${result.unique_id} | Admin: admin / ${result.adminPassword || "N/A"}`;
+          const cmsNote = `[CMS Auto-Created] ID: ${result.unique_id} | Domain: ${result.domain} | Admin: ${result.adminUsername || "admin"} / ${result.adminPassword || "N/A"}`;
           const existingNotes = updated.notes || "";
           const newNotes = existingNotes
             ? `${existingNotes}\n${cmsNote}`
@@ -200,7 +202,7 @@ export async function PATCH(request: NextRequest) {
               name: existing.customerName,
               cmsId: result.unique_id,
               domain: result.domain || "dashcore.eu",
-              adminUsername: "admin",
+              adminUsername: result.adminUsername || "admin",
               adminPassword: result.adminPassword || "N/A",
             });
             console.log(`CMS ready email sent to ${existing.customerEmail}`);
