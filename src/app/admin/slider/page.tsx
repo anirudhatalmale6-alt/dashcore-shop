@@ -24,7 +24,7 @@ export default function SliderAdmin() {
   const dragOverItemRef = useRef<number | null>(null);
 
   const load = useCallback(() => {
-    const token = localStorage.getItem("admin_token");
+    const token = localStorage.getItem("dashcore_admin_token");
     fetch("/api/admin/slider", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((d) => { setImages(Array.isArray(d) ? d : []); setLoading(false); })
@@ -33,7 +33,7 @@ export default function SliderAdmin() {
 
   useEffect(() => { load(); }, [load]);
 
-  const token = () => localStorage.getItem("admin_token") || "";
+  const token = () => localStorage.getItem("dashcore_admin_token") || "";
 
   const sortedImages = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
 

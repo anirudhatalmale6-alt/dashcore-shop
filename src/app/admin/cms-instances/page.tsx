@@ -5,7 +5,7 @@ import AdminShell from "@/components/AdminShell";
 import {
   Server, Loader2, Plus, Eye, Trash2, RefreshCw, X,
   CheckCircle, XCircle, Clock, Globe, Users, Shield,
-  ChevronLeft, ChevronRight, Search, Copy, Edit3,
+  ChevronLeft, ChevronRight, Search, Copy, Edit3, Save,
 } from "lucide-react";
 
 interface CmsInstance {
@@ -110,6 +110,21 @@ export default function CmsInstancesPage() {
 
   const [form, setForm] = useState({ name: "", dns: "", subdomain: "", subscription_plan: "monthly", admin_username: "admin", admin_email: "", admin_password: "" });
 
+  // Edit state for Info tab
+  const [editInfo, setEditInfo] = useState({ name: "", subscription_plan: "", admin_login_path: "", reseller_login_path: "", support_plan_id: "" });
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoSaved, setInfoSaved] = useState(false);
+
+  // Edit state for DNS tab
+  const [editDns, setEditDns] = useState({ dns: "", subdomain: "" });
+  const [savingDns, setSavingDns] = useState(false);
+  const [dnsSaved, setDnsSaved] = useState(false);
+
+  // Renew license state
+  const [renewMonths, setRenewMonths] = useState(1);
+  const [renewingLicense, setRenewingLicense] = useState(false);
+  const [licenseSaved, setLicenseSaved] = useState(false);
+
   const headers = useCallback(() => {
     const token = localStorage.getItem("dashcore_admin_token");
     return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
@@ -144,8 +159,22 @@ export default function CmsInstancesPage() {
         proxy(`/api/v1/cms/${id}`),
         proxy(`/api/v1/license/${id}`),
       ]);
-      if (cmsRes.success) setDetail(cmsRes.data);
+      if (cmsRes.success) {
+        setDetail(cmsRes.data);
+        const d = cmsRes.data;
+        setEditInfo({
+          name: d.name || "",
+          subscription_plan: d.subscription_plan || "monthly",
+          admin_login_path: d.admin_login_path || "",
+          reseller_login_path: d.reseller_login_path || "",
+          support_plan_id: d.support_plan_id != null ? String(d.support_plan_id) : "",
+        });
+        setEditDns({ dns: d.dns || "", subdomain: d.subdomain || "" });
+      }
       if (licRes.success) setLicense(licRes.data);
+      setInfoSaved(false);
+      setDnsSaved(false);
+      setLicenseSaved(false);
     } finally {
       setDetailLoading(false);
     }
@@ -177,6 +206,69 @@ export default function CmsInstancesPage() {
     await proxy(`/api/v1/cms/${id}`, "PATCH", { active: currentActive ? 0 : 1 });
     fetchInstances();
     if (detail?.id === id) openDetail(id);
+  };
+
+  const handleSaveInfo = async () => {
+    if (!detail) return;
+    setSavingInfo(true);
+    setInfoSaved(false);
+    try {
+      const body: Record<string, unknown> = {
+        name: editInfo.name,
+        subscription_plan: editInfo.subscription_plan,
+        admin_login_path: editInfo.admin_login_path || null,
+        reseller_login_path: editInfo.reseller_login_path || null,
+        support_plan_id: editInfo.support_plan_id ? Number(editInfo.support_plan_id) : null,
+      };
+      const res = await proxy(`/api/v1/cms/${detail.id}`, "PATCH", body);
+      if (res.success || res.data) {
+        setInfoSaved(true);
+        setTimeout(() => setInfoSaved(false), 2500);
+        openDetail(detail.id);
+        fetchInstances();
+      }
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
+  const handleSaveDns = async () => {
+    if (!detail) return;
+    setSavingDns(true);
+    setDnsSaved(false);
+    try {
+      const res = await proxy(`/api/v1/dns/${detail.id}`, "PATCH", {
+        dns: editDns.dns,
+        subdomain: editDns.subdomain || null,
+      });
+      if (res.success || res.data) {
+        setDnsSaved(true);
+        setTimeout(() => setDnsSaved(false), 2500);
+        openDetail(detail.id);
+        fetchInstances();
+      }
+    } finally {
+      setSavingDns(false);
+    }
+  };
+
+  const handleRenewLicense = async () => {
+    if (!detail) return;
+    setRenewingLicense(true);
+    setLicenseSaved(false);
+    try {
+      const res = await proxy(`/api/v1/license/${detail.id}/renew`, "POST", { months: renewMonths });
+      if (res.success || res.data) {
+        setLicenseSaved(true);
+        setTimeout(() => setLicenseSaved(false), 2500);
+        // Refresh license data
+        const licRes = await proxy(`/api/v1/license/${detail.id}`);
+        if (licRes.success) setLicense(licRes.data);
+        fetchInstances();
+      }
+    } finally {
+      setRenewingLicense(false);
+    }
   };
 
   const copyId = (uid: string) => {
@@ -374,33 +466,80 @@ export default function CmsInstancesPage() {
                           <StatusBadge active={detail.active} />
                         </div>
                         <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">Plan</p>
-                          <PlanBadge plan={detail.subscription_plan} />
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">DNS</p>
-                          <p className="text-sm text-[#0f172a]">{detail.dns}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">Subdomain</p>
-                          <p className="text-sm text-[#0f172a]">{detail.subdomain || "N/A"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">Admin Login Path</p>
-                          <p className="text-sm text-[#0f172a]">{detail.admin_login_path || "Default"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">Reseller Login Path</p>
-                          <p className="text-sm text-[#0f172a]">{detail.reseller_login_path || "Default"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">Support Plan</p>
-                          <p className="text-sm text-[#0f172a]">{detail.support_plan_name || "None"}</p>
-                        </div>
-                        <div>
                           <p className="text-xs text-[#94a3b8] mb-0.5">Created</p>
                           <p className="text-sm text-[#0f172a]">{formatDate(detail.created_at)}</p>
                         </div>
+                      </div>
+
+                      <div className="border-t border-[#e2e8f0] pt-4 space-y-3">
+                        <div>
+                          <label className="block text-xs text-[#94a3b8] mb-1">Name</label>
+                          <input
+                            value={editInfo.name}
+                            onChange={(e) => setEditInfo({ ...editInfo, name: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-[#94a3b8] mb-1">Subscription Plan</label>
+                          <select
+                            value={editInfo.subscription_plan}
+                            onChange={(e) => setEditInfo({ ...editInfo, subscription_plan: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                          >
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="half_year">Half Year</option>
+                            <option value="yearly">Yearly</option>
+                            <option value="lifetime">Lifetime</option>
+                          </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-[#94a3b8] mb-1">Admin Login Path</label>
+                            <input
+                              value={editInfo.admin_login_path}
+                              onChange={(e) => setEditInfo({ ...editInfo, admin_login_path: e.target.value })}
+                              placeholder="/admin"
+                              className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-[#94a3b8] mb-1">Reseller Login Path</label>
+                            <input
+                              value={editInfo.reseller_login_path}
+                              onChange={(e) => setEditInfo({ ...editInfo, reseller_login_path: e.target.value })}
+                              placeholder="/reseller"
+                              className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-[#94a3b8] mb-1">Support Plan ID</label>
+                          <input
+                            type="number"
+                            value={editInfo.support_plan_id}
+                            onChange={(e) => setEditInfo({ ...editInfo, support_plan_id: e.target.value })}
+                            placeholder="Leave empty for none"
+                            className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-3 pt-2">
+                        {infoSaved && (
+                          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                            <CheckCircle className="h-3.5 w-3.5" /> Saved
+                          </span>
+                        )}
+                        <button
+                          onClick={handleSaveInfo}
+                          disabled={savingInfo || !editInfo.name.trim()}
+                          className="flex items-center gap-2 px-4 py-2 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors"
+                        >
+                          {savingInfo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          Save Changes
+                        </button>
                       </div>
                     </div>
                   )}
@@ -474,6 +613,41 @@ export default function CmsInstancesPage() {
                           </p>
                         </div>
                       </div>
+
+                      {/* Renew License */}
+                      <div className="border-t border-[#e2e8f0] pt-4">
+                        <h3 className="text-sm font-semibold text-[#0f172a] mb-3">Renew License</h3>
+                        <div className="flex items-end gap-3">
+                          <div className="flex-1">
+                            <label className="block text-xs text-[#94a3b8] mb-1">Add Months</label>
+                            <select
+                              value={renewMonths}
+                              onChange={(e) => setRenewMonths(Number(e.target.value))}
+                              className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                            >
+                              <option value={1}>1 Month</option>
+                              <option value={3}>3 Months</option>
+                              <option value={6}>6 Months</option>
+                              <option value={12}>12 Months</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {licenseSaved && (
+                              <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium whitespace-nowrap">
+                                <CheckCircle className="h-3.5 w-3.5" /> Renewed
+                              </span>
+                            )}
+                            <button
+                              onClick={handleRenewLicense}
+                              disabled={renewingLicense}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors whitespace-nowrap"
+                            >
+                              {renewingLicense ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                              Renew
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -481,16 +655,42 @@ export default function CmsInstancesPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">DNS / Domain</p>
-                          <p className="text-sm text-[#0f172a] flex items-center gap-1">
-                            <Globe className="h-3.5 w-3.5 text-[#6366f1]" />
-                            {detail.dns}
-                          </p>
+                          <label className="block text-xs text-[#94a3b8] mb-1">DNS / Domain</label>
+                          <div className="relative">
+                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6366f1]" />
+                            <input
+                              value={editDns.dns}
+                              onChange={(e) => setEditDns({ ...editDns, dns: e.target.value })}
+                              placeholder="e.g. client.example.com"
+                              className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                            />
+                          </div>
                         </div>
                         <div>
-                          <p className="text-xs text-[#94a3b8] mb-0.5">Subdomain</p>
-                          <p className="text-sm text-[#0f172a]">{detail.subdomain || "N/A"}</p>
+                          <label className="block text-xs text-[#94a3b8] mb-1">Subdomain</label>
+                          <input
+                            value={editDns.subdomain}
+                            onChange={(e) => setEditDns({ ...editDns, subdomain: e.target.value })}
+                            placeholder="e.g. client"
+                            className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                          />
                         </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-3 pt-2">
+                        {dnsSaved && (
+                          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                            <CheckCircle className="h-3.5 w-3.5" /> Saved
+                          </span>
+                        )}
+                        <button
+                          onClick={handleSaveDns}
+                          disabled={savingDns || !editDns.dns.trim()}
+                          className="flex items-center gap-2 px-4 py-2 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors"
+                        >
+                          {savingDns ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          Save DNS
+                        </button>
                       </div>
                     </div>
                   )}
