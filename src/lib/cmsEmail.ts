@@ -123,6 +123,43 @@ export async function sendLicenseReminderEmail(opts: {
   return true;
 }
 
+export async function sendOrderConfirmedEmail(opts: {
+  email: string;
+  name: string;
+  orderId: string;
+  tierName: string;
+  tierPrice: number;
+}) {
+  const transport = await getSmtpTransport();
+  if (!transport) return false;
+
+  const from = await getFromAddress();
+
+  await transport.sendMail({
+    from,
+    to: opts.email,
+    subject: `Order Confirmed - ${opts.orderId}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+        <h2 style="color:#6366f1">Payment Confirmed!</h2>
+        <p>Hello ${opts.name},</p>
+        <p>Your payment has been confirmed. Thank you for your order!</p>
+        <table style="width:100%;border-collapse:collapse;margin:20px 0">
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Order ID</td><td style="padding:8px;border:1px solid #ddd">${opts.orderId}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Plan</td><td style="padding:8px;border:1px solid #ddd">${opts.tierName}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Amount</td><td style="padding:8px;border:1px solid #ddd">&euro;${opts.tierPrice.toFixed(2)}</td></tr>
+        </table>
+        <p>Your CMS instance is being set up and you will receive another email with your login details shortly.</p>
+        <p>If you have any questions, please contact our support team.</p>
+        <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+        <p style="font-size:12px;color:#888">DashCore IPTV Platform Engine</p>
+      </div>
+    `,
+  });
+
+  return true;
+}
+
 export async function sendLicenseExpiredEmail(opts: {
   email: string;
   name: string;

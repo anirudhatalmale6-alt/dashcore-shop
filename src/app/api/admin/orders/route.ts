@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAdminFromRequest } from "@/lib/adminAuth";
-import { sendCmsReadyEmail } from "@/lib/cmsEmail";
+import { sendCmsReadyEmail, sendOrderConfirmedEmail } from "@/lib/cmsEmail";
 import { PaymentStatus } from "@prisma/client";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -43,6 +43,7 @@ async function createCmsInstance(order: {
   const domain = `${subdomain}.dashcore.eu`;
 
   const adminEmail = `admin_${suffix}@${subdomain}.dashcore.eu`;
+  const adminUsername = `admin_${suffix}`;
 
   const res = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
     method: "POST",
@@ -56,7 +57,7 @@ async function createCmsInstance(order: {
       dns: domain,
       subdomain,
       subscription_plan: subscriptionPlan,
-      adminUsername: "admin",
+      adminUsername,
       adminEmail,
       adminPassword: adminPassword,
     }),
@@ -67,7 +68,7 @@ async function createCmsInstance(order: {
     return { error: `CMS API responded ${res.status}: ${JSON.stringify(data)}` };
   }
   const cmsData = data.data || data;
-  return { unique_id: cmsData.unique_id || cmsData.id, adminUsername: "admin", adminPassword, domain };
+  return { unique_id: cmsData.unique_id || cmsData.id, adminUsername, adminPassword, domain };
 }
 
 export async function GET(request: NextRequest) {
@@ -171,6 +172,22 @@ export async function PATCH(request: NextRequest) {
       where: { id: Number(orderId) },
       data: updateData,
     });
+
+    // Send order confirmation email immediately when marked as paid
+    if (status === "paid" && existing.paymentStatus !== "paid") {
+      try {
+        await sendOrderConfirmedEmail({
+          email: existing.customerEmail,
+          name: existing.customerName,
+          orderId: existing.orderId,
+          tierName: existing.tierName,
+          tierPrice: Number(existing.tierPrice),
+        });
+        console.log(`Order confirmation email sent to ${existing.customerEmail}`);
+      } catch (emailErr) {
+        console.error(`Failed to send order confirmation email:`, emailErr);
+      }
+    }
 
     // Auto-create CMS instance when order is newly confirmed as paid
     let cmsError: string | undefined;
