@@ -18,7 +18,7 @@ function generateOrderId(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerEmail, customerName, tierId, paymentMethod, cryptoCurrency, selectedOptions } = body;
+    const { customerEmail, customerName, tierId, paymentMethod, cryptoCurrency, selectedOptions, optionPrices, oneTimeFlags } = body;
 
     if (!customerEmail || !customerName || !tierId || !paymentMethod) {
       return NextResponse.json(
@@ -62,6 +62,21 @@ export async function POST(request: NextRequest) {
       attempts++;
     } while (attempts < 10);
 
+    let recurringAdd = 0;
+    let oneTimeAdd = 0;
+    if (optionPrices && typeof optionPrices === "object") {
+      for (const [key, val] of Object.entries(optionPrices)) {
+        const amount = Number(val) || 0;
+        if (oneTimeFlags?.[key]) {
+          oneTimeAdd += amount;
+        } else {
+          recurringAdd += amount;
+        }
+      }
+    }
+    const basePrice = Number(tier.price);
+    const totalPrice = basePrice + recurringAdd + oneTimeAdd;
+
     const order = await prisma.order.create({
       data: {
         orderId,
@@ -69,6 +84,9 @@ export async function POST(request: NextRequest) {
         customerName: customerName.trim(),
         tierName: tier.name,
         tierPrice: tier.price,
+        optionsPrice: recurringAdd,
+        oneTimeFees: oneTimeAdd,
+        totalPrice,
         paymentMethod: paymentMethod as PaymentMethod,
         paymentStatus: "pending",
         cryptoCurrency: paymentMethod === "crypto" ? (cryptoCurrency as CryptoCurrency) : null,

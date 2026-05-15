@@ -14,12 +14,14 @@ import {
   CreditCard,
   FileText,
   Images,
+  Users,
 } from "lucide-react";
 
 const navItems = [
   { key: "dashboard", label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { key: "products", label: "Products", href: "/admin/products", icon: Package },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+  { key: "customers", label: "Customers", href: "/admin/customers", icon: Users },
   { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare },
   { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText },
   { key: "slider", label: "Slider", href: "/admin/slider", icon: Images },

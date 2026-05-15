@@ -60,11 +60,22 @@ function CheckoutContent() {
   const tierId = searchParams.get("tier");
 
   const selectedOptions: Record<string, string> = {};
+  const optionPrices: Record<string, number> = {};
+  const oneTimeFlags: Record<string, boolean> = {};
   searchParams.forEach((value, key) => {
-    if (key.startsWith("opt_")) {
+    if (key.startsWith("opt_") && !key.startsWith("optprice_") && !key.startsWith("optonce_")) {
       selectedOptions[key.replace("opt_", "")] = value;
     }
+    if (key.startsWith("optprice_")) {
+      optionPrices[key.replace("optprice_", "")] = Number(value) || 0;
+    }
+    if (key.startsWith("optonce_")) {
+      oneTimeFlags[key.replace("optonce_", "")] = value === "1";
+    }
   });
+
+  const recurringOptionsTotal = Object.entries(optionPrices).reduce((sum, [k, v]) => sum + (oneTimeFlags[k] ? 0 : v), 0);
+  const oneTimeTotal = Object.entries(optionPrices).reduce((sum, [k, v]) => sum + (oneTimeFlags[k] ? v : 0), 0);
 
   const [tier, setTier] = useState<TierInfo | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
@@ -126,6 +137,8 @@ function CheckoutContent() {
           paymentMethod: paymentTab,
           cryptoCurrency: paymentTab === "crypto" ? cryptoCoin : undefined,
           selectedOptions: Object.keys(selectedOptions).length > 0 ? selectedOptions : undefined,
+          optionPrices: Object.keys(optionPrices).length > 0 ? optionPrices : undefined,
+          oneTimeFlags: Object.keys(oneTimeFlags).length > 0 ? oneTimeFlags : undefined,
         }),
       });
 
@@ -233,23 +246,51 @@ function CheckoutContent() {
               <div className="border-t border-[#e2e8f0] pt-3 mb-3 space-y-1">
                 {Object.entries(selectedOptions).map(([key, val]) => (
                   <div key={key} className="flex justify-between text-sm">
-                    <span className="text-[#64748b]">{key}</span>
-                    <span className="font-medium">{val}</span>
+                    <span className="text-[#64748b]">
+                      {key}
+                      {oneTimeFlags[key] && <span className="text-[10px] ml-1 text-amber-600">(one-time)</span>}
+                    </span>
+                    <span className="font-medium">
+                      {val}
+                      {optionPrices[key] > 0 && <span className="text-[#6366f1] ml-1">+${optionPrices[key]}</span>}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="border-t border-[#e2e8f0] pt-4">
+            <div className="border-t border-[#e2e8f0] pt-4 space-y-2">
               <div className="flex items-baseline justify-between">
-                <span className="text-sm text-[#64748b]">Price</span>
+                <span className="text-sm text-[#64748b]">Base price</span>
                 <div>
-                  <span className="text-2xl font-bold">${tier!.price}</span>
+                  <span className="text-lg font-bold">${tier!.price}</span>
                   {tier!.period !== "lifetime" && (
-                    <span className="text-sm text-[#64748b] ml-1">/{periodLabel(tier!.period)}</span>
+                    <span className="text-xs text-[#64748b] ml-1">/{periodLabel(tier!.period)}</span>
                   )}
                 </div>
               </div>
+              {recurringOptionsTotal > 0 && (
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-[#64748b]">Options</span>
+                  <span className="text-sm font-semibold">+${recurringOptionsTotal}</span>
+                </div>
+              )}
+              {oneTimeTotal > 0 && (
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-[#64748b]">One-time fees</span>
+                  <span className="text-sm font-semibold text-amber-600">+${oneTimeTotal}</span>
+                </div>
+              )}
+              <div className="border-t border-[#e2e8f0] pt-2 flex items-baseline justify-between">
+                <span className="text-sm font-semibold text-[#0f172a]">Due today</span>
+                <span className="text-2xl font-bold text-[#6366f1]">${tier!.price + recurringOptionsTotal + oneTimeTotal}</span>
+              </div>
+              {oneTimeTotal > 0 && tier!.period !== "lifetime" && (
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs text-[#94a3b8]">Next renewal</span>
+                  <span className="text-sm text-[#64748b]">${tier!.price + recurringOptionsTotal}/{periodLabel(tier!.period)}</span>
+                </div>
+              )}
             </div>
 
             {tier!.features && tier!.features.length > 0 && (

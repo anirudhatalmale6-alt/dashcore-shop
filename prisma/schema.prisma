@@ -107,6 +107,9 @@ model Order {
   customerName    String           @map("customer_name") @db.VarChar(255)
   tierName        String           @map("tier_name") @db.VarChar(120)
   tierPrice       Decimal          @map("tier_price") @db.Decimal(10, 2)
+  optionsPrice    Decimal          @default(0) @map("options_price") @db.Decimal(10, 2)
+  oneTimeFees     Decimal          @default(0) @map("one_time_fees") @db.Decimal(10, 2)
+  totalPrice      Decimal          @default(0) @map("total_price") @db.Decimal(10, 2)
   paymentMethod   PaymentMethod    @map("payment_method")
   paymentStatus   PaymentStatus    @default(pending) @map("payment_status")
   paymentId       String?          @map("payment_id") @db.VarChar(255)
@@ -290,12 +293,30 @@ model Customer {
   name         String    @db.VarChar(255)
   passwordHash String    @map("password_hash") @db.VarChar(255)
   active       Boolean   @default(true)
+  banned       Boolean   @default(false)
+  banReason    String?   @map("ban_reason") @db.Text
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   lastLogin    DateTime? @map("last_login")
 
+  loginLogs    CustomerLoginLog[]
+
   @@index([email])
   @@map("customers")
+}
+
+model CustomerLoginLog {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @map("customer_id")
+  ip         String   @db.VarChar(100)
+  userAgent  String   @default("") @map("user_agent") @db.VarChar(500)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("customer_login_logs")
 }
 
 // ---------------------------------------------------------------------------

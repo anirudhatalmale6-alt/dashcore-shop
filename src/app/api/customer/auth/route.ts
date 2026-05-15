@@ -34,11 +34,19 @@ export async function POST(req: NextRequest) {
     if (!customer || !customer.active) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
+    if (customer.banned) {
+      return NextResponse.json({ error: customer.banReason ? `Account suspended: ${customer.banReason}` : "Account suspended" }, { status: 403 });
+    }
     const valid = await bcrypt.compare(password, customer.passwordHash);
     if (!valid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
-    await prisma.customer.update({ where: { id: customer.id }, data: { lastLogin: new Date() } });
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+    const userAgent = req.headers.get("user-agent") || "";
+    await Promise.all([
+      prisma.customer.update({ where: { id: customer.id }, data: { lastLogin: new Date() } }),
+      prisma.customerLoginLog.create({ data: { customerId: customer.id, ip, userAgent: userAgent.slice(0, 500) } }),
+    ]);
     const token = generateCustomerToken(customer.id, customer.email, customer.name);
     return NextResponse.json({ token, customer: { id: customer.id, email: customer.email, name: customer.name } });
   }

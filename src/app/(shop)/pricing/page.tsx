@@ -106,7 +106,11 @@ function ProductRow({ product }: { product: Product }) {
   product.options.forEach((opt) => {
     const choices = parseChoices(opt.choices);
     const idx = selectedOptions[opt.name] || 0;
-    if (choices[idx]) checkoutParams.set(`opt_${opt.name}`, choices[idx].label);
+    if (choices[idx]) {
+      checkoutParams.set(`opt_${opt.name}`, choices[idx].label);
+      if (choices[idx].priceAdd) checkoutParams.set(`optprice_${opt.name}`, String(choices[idx].priceAdd));
+      if ((choices[idx] as Choice & { oneTime?: boolean }).oneTime) checkoutParams.set(`optonce_${opt.name}`, "1");
+    }
   });
 
   return (
@@ -192,7 +196,7 @@ function ProductRow({ product }: { product: Product }) {
                 >
                   {choices.map((c, i) => (
                     <option key={i} value={i}>
-                      {c.label}{c.priceAdd > 0 ? ` (+$${c.priceAdd})` : ""}
+                      {c.label}{c.priceAdd > 0 ? ` (+$${c.priceAdd}${(c as Choice & { oneTime?: boolean }).oneTime ? " one-time" : ""})` : ""}
                     </option>
                   ))}
                 </select>

@@ -579,6 +579,15 @@ export default function AdminProductsPage() {
                                             className="input-field text-xs w-20"
                                           />
                                         </div>
+                                        <label className="flex items-center gap-1 text-[10px] text-[#64748b] whitespace-nowrap cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={(choice as Choice & { oneTime?: boolean }).oneTime || false}
+                                            onChange={(e) => updateChoice(pIndex, oIndex, cIndex, "oneTime", e.target.checked)}
+                                            className="rounded border-[#e2e8f0]"
+                                          />
+                                          One-time
+                                        </label>
                                         <button onClick={() => removeChoice(pIndex, oIndex, cIndex)} className="text-[#94a3b8] hover:text-red-500 p-0.5">
                                           <X className="h-3 w-3" />
                                         </button>
