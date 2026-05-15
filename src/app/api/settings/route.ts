@@ -27,6 +27,22 @@ export async function GET(request: NextRequest) {
       heroSubtitle: settings?.heroSubtitle || "High-performance streaming infrastructure",
       heroButtonText: settings?.heroButtonText || "View Plans",
       showProductsOnHome: settings?.showProductsOnHome ?? true,
+      showFeaturesSection: settings?.showFeaturesSection ?? true,
+      showProtocolsSection: settings?.showProtocolsSection ?? true,
+      showCtaSection: settings?.showCtaSection ?? true,
+      featuresSectionTitle: settings?.featuresSectionTitle || "Powerful Capabilities",
+      protocolsSectionTitle: settings?.protocolsSectionTitle || "Complete Protocol Coverage",
+      protocolsSectionSubtitle: settings?.protocolsSectionSubtitle || "From ingest to delivery — every protocol and workflow fully supported.",
+      ctaTitle: settings?.ctaTitle || "Ready to Renew Your License?",
+      ctaSubtitle: settings?.ctaSubtitle || "Keep your platform running at peak performance. Flexible durations, multiple payment methods.",
+      ctaButtonText: settings?.ctaButtonText || "View Pricing",
+      pricingPageTitle: settings?.pricingPageTitle || "Choose Your License Plan",
+      pricingPageSubtitle: settings?.pricingPageSubtitle || "Renew your DashCore platform engine license. Choose the plan that fits your needs.",
+      contactPageTitle: settings?.contactPageTitle || "Contact Us",
+      contactPageSubtitle: settings?.contactPageSubtitle || "Have a question or need help? Select a department and send us a message.",
+      hidePricingForGuests: settings?.hidePricingForGuests ?? false,
+      gtagId: settings?.gtagId || "",
+      socialLinks: settings?.socialLinks || [],
     };
 
     if (tierId) {

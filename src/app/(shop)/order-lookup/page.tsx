@@ -6,6 +6,7 @@ import Link from "next/link";
 
 interface OrderInfo {
   id: number;
+  orderId: string;
   customerName: string;
   customerEmail: string;
   tierName: string;
@@ -78,7 +79,7 @@ export default function OrderLookupPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Order ID</label>
-                  <input type="text" value={orderId} onChange={(e) => setOrderId(e.target.value)} placeholder="#1234" className="input-field" />
+                  <input type="text" value={orderId} onChange={(e) => setOrderId(e.target.value)} placeholder="AB1C2-0526" className="input-field" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Email Address</label>
@@ -96,7 +97,7 @@ export default function OrderLookupPage() {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <p className="text-xs text-[#94a3b8] uppercase tracking-wider">Order</p>
-                    <p className="text-2xl font-bold font-mono">#{order.id}</p>
+                    <p className="text-2xl font-bold font-mono">{order.orderId}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${status?.cls}`}>
                     <StatusIcon className="h-3.5 w-3.5" />

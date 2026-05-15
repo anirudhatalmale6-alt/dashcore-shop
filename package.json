@@ -13,6 +13,7 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "bcryptjs": "^3.0.3",
     "lucide-react": "^1.14.0",
     "next": "16.2.6",

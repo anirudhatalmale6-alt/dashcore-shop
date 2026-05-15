@@ -102,6 +102,7 @@ enum CryptoCurrency {
 
 model Order {
   id              Int              @id @default(autoincrement())
+  orderId         String           @unique @map("order_id") @db.VarChar(11)
   customerEmail   String           @map("customer_email") @db.VarChar(255)
   customerName    String           @map("customer_name") @db.VarChar(255)
   tierName        String           @map("tier_name") @db.VarChar(120)
@@ -210,6 +211,38 @@ model SiteSettings {
   heroButtonText       String  @default("View Plans") @map("hero_button_text") @db.VarChar(100)
   showProductsOnHome   Boolean @default(true) @map("show_products_on_home")
 
+  // Section Visibility
+  showFeaturesSection  Boolean @default(true) @map("show_features_section")
+  showProtocolsSection Boolean @default(true) @map("show_protocols_section")
+  showCtaSection       Boolean @default(true) @map("show_cta_section")
+
+  // Editable Section Text
+  featuresSectionTitle String  @default("Powerful Capabilities") @map("features_section_title") @db.VarChar(255)
+  protocolsSectionTitle String @default("Complete Protocol Coverage") @map("protocols_section_title") @db.VarChar(255)
+  protocolsSectionSubtitle String @default("From ingest to delivery — every protocol and workflow fully supported.") @map("protocols_section_subtitle") @db.Text
+  ctaTitle             String  @default("Ready to Renew Your License?") @map("cta_title") @db.VarChar(500)
+  ctaSubtitle          String  @default("Keep your platform running at peak performance. Flexible durations, multiple payment methods.") @map("cta_subtitle") @db.Text
+  ctaButtonText        String  @default("View Pricing") @map("cta_button_text") @db.VarChar(100)
+  pricingPageTitle     String  @default("Choose Your License Plan") @map("pricing_page_title") @db.VarChar(500)
+  pricingPageSubtitle  String  @default("Renew your DashCore platform engine license. Choose the plan that fits your needs.") @map("pricing_page_subtitle") @db.Text
+  contactPageTitle     String  @default("Contact Us") @map("contact_page_title") @db.VarChar(255)
+  contactPageSubtitle  String  @default("Have a question or need help? Select a department and send us a message.") @map("contact_page_subtitle") @db.Text
+
+  // Pricing Visibility
+  hidePricingForGuests Boolean @default(false) @map("hide_pricing_for_guests")
+
+  // Email Templates
+  orderReceivedEmailSubject  String  @default("New Order Received") @map("order_received_email_subject") @db.VarChar(500)
+  orderReceivedEmailBody     String  @default("") @map("order_received_email_body") @db.Text
+  orderConfirmedEmailSubject String  @default("Your Order Has Been Confirmed") @map("order_confirmed_email_subject") @db.VarChar(500)
+  orderConfirmedEmailBody    String  @default("") @map("order_confirmed_email_body") @db.Text
+
+  // Analytics
+  gtagId               String  @default("") @map("gtag_id") @db.VarChar(50)
+
+  // Social Links
+  socialLinks          Json    @default("[]") @map("social_links")
+
   @@map("site_settings")
 }
 
@@ -246,6 +279,23 @@ model SliderImage {
 
   @@index([active, sortOrder])
   @@map("slider_images")
+}
+
+// ---------------------------------------------------------------------------
+// Customer  (client area users)
+// ---------------------------------------------------------------------------
+model Customer {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique @db.VarChar(255)
+  name         String    @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  lastLogin    DateTime? @map("last_login")
+
+  @@index([email])
+  @@map("customers")
 }
 
 // ---------------------------------------------------------------------------

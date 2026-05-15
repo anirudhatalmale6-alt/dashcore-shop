@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const order = await prisma.order.findFirst({
       where: {
-        id: Number(orderId),
+        orderId: orderId.trim().toUpperCase(),
         customerEmail: email.trim().toLowerCase(),
       },
     });
@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       id: order.id,
+      orderId: order.orderId,
       customerName: order.customerName,
       customerEmail: order.customerEmail,
       tierName: order.tierName,

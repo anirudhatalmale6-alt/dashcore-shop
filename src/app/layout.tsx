@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { prisma } from "@/lib/db";
 import "./globals.css";
 
@@ -34,10 +35,37 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+async function getGtagId(): Promise<string> {
+  try {
+    const s = await prisma.siteSettings.findUnique({ where: { id: 1 }, select: { gtagId: true } });
+    return s?.gtagId || "";
+  } catch {
+    return "";
+  }
+}
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const gtagId = await getGtagId();
+
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-white text-[#0f172a]">
+        {gtagId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gtagId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gtagId}');
+              `}
+            </Script>
+          </>
+        )}
         {children}
       </body>
     </html>

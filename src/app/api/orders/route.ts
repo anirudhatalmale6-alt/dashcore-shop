@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { PaymentMethod, CryptoCurrency } from "@prisma/client";
 
+const ORDER_ID_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
+function generateOrderId(): string {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yy = String(now.getFullYear()).slice(-2);
+  let random = "";
+  for (let i = 0; i < 5; i++) {
+    random += ORDER_ID_CHARS[Math.floor(Math.random() * ORDER_ID_CHARS.length)];
+  }
+  return `${random}-${mm}${yy}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -39,8 +52,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Pricing tier not found or inactive" }, { status: 404 });
     }
 
+    // Generate a unique orderId, retrying on the rare collision
+    let orderId: string;
+    let attempts = 0;
+    do {
+      orderId = generateOrderId();
+      const exists = await prisma.order.findUnique({ where: { orderId } });
+      if (!exists) break;
+      attempts++;
+    } while (attempts < 10);
+
     const order = await prisma.order.create({
       data: {
+        orderId,
         customerEmail: customerEmail.trim(),
         customerName: customerName.trim(),
         tierName: tier.name,
@@ -55,6 +79,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         id: order.id,
+        orderId: order.orderId,
         status: order.paymentStatus,
         tierName: order.tierName,
         tierPrice: Number(order.tierPrice),

@@ -8,14 +8,14 @@ import {
   DollarSign,
   Clock,
   Loader2,
-  CheckCircle,
-  XCircle,
   RefreshCw,
   TrendingUp,
+  Eye,
 } from "lucide-react";
 
 interface Order {
   id: number;
+  orderId: string;
   customerEmail: string;
   customerName: string;
   tierName: string;
@@ -111,7 +111,7 @@ export default function AdminDashboardPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#f1f5f9]">
-                  {["#", "Customer", "Plan", "Amount", "Method", "Status", "Date"].map((h) => (
+                  {["#", "Customer", "Plan", "Amount", "Method", "Status", "Date", ""].map((h) => (
                     <th key={h} className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">{h}</th>
                   ))}
                 </tr>
@@ -119,7 +119,7 @@ export default function AdminDashboardPage() {
               <tbody>
                 {orders.slice(0, 10).map((order) => (
                   <tr key={order.id} className="border-b border-[#f8fafc] hover:bg-[#f8fafc] transition-colors">
-                    <td className="px-5 py-3 text-sm font-mono text-[#64748b]">{order.id}</td>
+                    <td className="px-5 py-3 text-sm font-mono text-[#64748b]">{order.orderId}</td>
                     <td className="px-5 py-3">
                       <p className="text-sm font-medium">{order.customerName}</p>
                       <p className="text-xs text-[#94a3b8]">{order.customerEmail}</p>
@@ -134,6 +134,14 @@ export default function AdminDashboardPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3 text-xs text-[#94a3b8]">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="px-5 py-3">
+                      <button
+                        onClick={() => router.push(`/admin/orders?view=${order.id}`)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#7c3aed] hover:text-[#6d28d9] transition-colors"
+                      >
+                        <Eye className="h-3.5 w-3.5" /> View
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

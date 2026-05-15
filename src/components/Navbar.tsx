@@ -2,12 +2,29 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Send } from "lucide-react";
+import { Menu, X, Send, Mail, Globe, Play, MessageCircle, User, LogIn, type LucideIcon } from "lucide-react";
 
 interface NavPage {
   title: string;
   slug: string;
 }
+
+interface SocialLink {
+  platform: string;
+  url: string;
+  enabled: boolean;
+}
+
+const PLATFORM_ICONS: Record<string, LucideIcon> = {
+  telegram: Send,
+  email: Mail,
+  twitter: Globe,
+  facebook: Globe,
+  instagram: Globe,
+  youtube: Play,
+  discord: MessageCircle,
+  whatsapp: MessageCircle,
+};
 
 const staticLinks = [
   { label: "Features", href: "/#features" },
@@ -20,6 +37,19 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmsPages, setCmsPages] = useState<NavPage[]>([]);
+  const [navSocialLink, setNavSocialLink] = useState<SocialLink | null>(null);
+  const [customerName, setCustomerName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const check = () => setCustomerName(localStorage.getItem("customer_name"));
+    check();
+    window.addEventListener("customer-auth-change", check);
+    window.addEventListener("storage", check);
+    return () => {
+      window.removeEventListener("customer-auth-change", check);
+      window.removeEventListener("storage", check);
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -34,10 +64,26 @@ export default function Navbar() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.socialLinks)) {
+          const enabled = data.socialLinks.filter((sl: SocialLink) => sl.enabled && sl.url);
+          // Prefer telegram, then fall back to first enabled link
+          const telegram = enabled.find((sl: SocialLink) => sl.platform === "telegram");
+          setNavSocialLink(telegram || enabled[0] || null);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const allLinks = [
     ...staticLinks,
     ...cmsPages.map((p) => ({ label: p.title, href: `/page/${p.slug}` })),
   ];
+
+  const SocialIcon = navSocialLink ? (PLATFORM_ICONS[navSocialLink.platform] || Send) : Send;
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 navbar-glass ${scrolled ? "scrolled" : ""}`}>
@@ -60,15 +106,28 @@ export default function Navbar() {
               </Link>
             ))}
 
-            <a
-              href="https://t.me/dashcore"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#6b7280] hover:text-[#6366f1] transition-colors"
-              aria-label="Telegram"
-            >
-              <Send className="h-4 w-4" />
-            </a>
+            {navSocialLink && (
+              <a
+                href={navSocialLink.url}
+                {...(!navSocialLink.url.startsWith("mailto:") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                className="text-[#6b7280] hover:text-[#6366f1] transition-colors"
+                aria-label={navSocialLink.platform}
+              >
+                <SocialIcon className="h-4 w-4" />
+              </a>
+            )}
+
+            {customerName ? (
+              <Link href="/account" className="flex items-center gap-1.5 text-sm font-medium text-[#6366f1] hover:text-[#4f46e5] transition-colors">
+                <User className="h-4 w-4" />
+                {customerName.split(" ")[0]}
+              </Link>
+            ) : (
+              <Link href="/login" className="flex items-center gap-1.5 text-sm font-medium text-[#6b7280] hover:text-[#6366f1] transition-colors">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+            )}
 
             <Link href="/pricing" className="btn-primary text-sm !py-2.5 !px-6">
               Get Started
@@ -98,6 +157,25 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {customerName ? (
+              <Link
+                href="/account"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 text-sm text-[#6366f1] font-medium py-2"
+              >
+                <User className="h-4 w-4" />
+                My Account
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 text-sm text-[#6b7280] font-medium py-2"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+            )}
             <Link
               href="/pricing"
               onClick={() => setMobileOpen(false)}

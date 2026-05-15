@@ -13,6 +13,8 @@ export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [pageTitle, setPageTitle] = useState("Contact Us");
+  const [pageSubtitle, setPageSubtitle] = useState("Have a question or need help? Select a department and send us a message.");
 
   useEffect(() => {
     fetch("/api/contact")
@@ -20,6 +22,13 @@ export default function ContactPage() {
       .then((data) => {
         setDepartments(data.departments || []);
         if (data.departments?.length) setDepartment(data.departments[0]);
+      })
+      .catch(() => {});
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.contactPageTitle) setPageTitle(d.contactPageTitle);
+        if (d.contactPageSubtitle) setPageSubtitle(d.contactPageSubtitle);
       })
       .catch(() => {});
   }, []);
@@ -80,10 +89,10 @@ export default function ContactPage() {
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#111827]">
-              Contact Us
+              {pageTitle}
             </h1>
             <p className="mx-auto mt-3 max-w-md text-sm text-[#6b7280] leading-relaxed">
-              Have a question or need help? Select a department and send us a message.
+              {pageSubtitle}
             </p>
           </div>
 

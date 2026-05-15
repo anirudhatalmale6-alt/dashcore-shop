@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, ArrowRight, Star, Zap, Crown, Shield, Loader2 } from "lucide-react";
+import { Check, ArrowRight, Star, Zap, Crown, Shield, Loader2, CheckCircle2, Lock } from "lucide-react";
 
 interface Choice {
   label: string;
@@ -56,14 +56,6 @@ const badgeIcons: Record<string, typeof Zap> = {
   red: Zap,
 };
 
-const badgeClasses: Record<string, string> = {
-  teal: "bg-teal-50 text-teal-700 border border-teal-200",
-  purple: "bg-purple-50 text-purple-700 border border-purple-200",
-  gold: "bg-amber-50 text-amber-700 border border-amber-200",
-  blue: "bg-blue-50 text-blue-700 border border-blue-200",
-  red: "bg-red-50 text-red-700 border border-red-200",
-};
-
 function parseFeatures(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw as string[];
   if (typeof raw === "string") {
@@ -80,7 +72,7 @@ function parseChoices(raw: unknown): Choice[] {
   return [];
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductRow({ product }: { product: Product }) {
   const activeTiers = product.tiers.filter((t) => t.active);
   const [selectedTier, setSelectedTier] = useState(activeTiers[0]?.id || 0);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>(() => {
@@ -108,7 +100,6 @@ function ProductCard({ product }: { product: Product }) {
     : parseFeatures(product.features);
 
   const BadgeIcon = badgeIcons[product.badgeColor] || Star;
-  const badgeCls = badgeClasses[product.badgeColor] || badgeClasses.purple;
 
   const checkoutParams = new URLSearchParams();
   checkoutParams.set("tier", String(tier.id));
@@ -119,104 +110,129 @@ function ProductCard({ product }: { product: Product }) {
   });
 
   return (
-    <div className={`relative flex flex-col ${product.featured ? "card-featured" : "card"} p-7 sm:p-8`}>
-      {product.badge && (
-        <div className="flex items-center justify-between mb-5">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${badgeCls}`}>
-            {product.badge}
-          </span>
-          <BadgeIcon className={`h-5 w-5 opacity-40 ${
-            product.badgeColor === "teal" ? "text-teal-500" :
-            product.badgeColor === "gold" ? "text-amber-500" :
-            product.badgeColor === "blue" ? "text-blue-500" :
-            "text-purple-500"
-          }`} />
-        </div>
-      )}
-
-      <h3 className="text-xl font-extrabold text-[#0f172a]">{product.name}</h3>
-      {product.description && (
-        <p className="text-xs text-[#64748b] mt-0.5">{product.description}</p>
-      )}
-
-      <div className="flex items-baseline gap-1 mt-4 mb-4">
-        <span className="text-4xl font-extrabold text-[#0f172a]">${totalPrice}</span>
-        {tier.period !== "lifetime" && (
-          <span className="text-sm text-[#94a3b8]">/{periodLabel(tier.period)}</span>
-        )}
-      </div>
-
-      {/* Duration selector */}
-      {activeTiers.length > 1 && (
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-[#64748b] mb-1.5">Duration</label>
-          <select
-            value={selectedTier}
-            onChange={(e) => setSelectedTier(Number(e.target.value))}
-            className="input-field text-sm cursor-pointer"
-          >
-            {activeTiers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} - ${t.price}/{periodLabel(t.period)}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Configurable options */}
-      {product.options.map((opt) => {
-        const choices = parseChoices(opt.choices);
-        if (choices.length === 0) return null;
-        return (
-          <div key={opt.id} className="mb-3">
-            <label className="block text-xs font-medium text-[#64748b] mb-1.5">{opt.name}</label>
-            <select
-              value={selectedOptions[opt.name] || 0}
-              onChange={(e) => setSelectedOptions((prev) => ({ ...prev, [opt.name]: Number(e.target.value) }))}
-              className="input-field text-sm cursor-pointer"
-            >
-              {choices.map((c, i) => (
-                <option key={i} value={i}>
-                  {c.label}{c.priceAdd > 0 ? ` (+$${c.priceAdd})` : ""}
-                </option>
-              ))}
-            </select>
+    <div className={`feature-card !p-0 overflow-hidden ${product.featured ? "!border-[#6366f1]" : ""}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-2">
+        {/* Left - Product Info */}
+        <div className="p-7 sm:p-8 flex flex-col">
+          <div className="flex items-center gap-3 mb-4">
+            {product.badge && (
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                product.badgeColor === "teal" ? "bg-teal-50 text-teal-700 border border-teal-200" :
+                product.badgeColor === "gold" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                product.badgeColor === "blue" ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                product.badgeColor === "red" ? "bg-red-50 text-red-700 border border-red-200" :
+                "bg-purple-50 text-purple-700 border border-purple-200"
+              }`}>
+                <BadgeIcon className="h-3 w-3" />
+                {product.badge}
+              </span>
+            )}
+            {product.featured && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#6366f1] text-white">
+                Popular
+              </span>
+            )}
           </div>
-        );
-      })}
 
-      <div className="border-t border-[#e2e8f0] mb-5 mt-2" />
+          <h3 className="text-2xl font-extrabold text-[#0f172a] mb-1" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            {product.name}
+          </h3>
+          {product.description && (
+            <p className="text-sm text-[#64748b] mb-5 leading-relaxed">{product.description}</p>
+          )}
 
-      <ul className="flex-1 space-y-2.5">
-        {features.map((feature, i) => (
-          <li key={i} className="flex items-start gap-2.5 text-sm text-[#475569]">
-            <Check className="h-4 w-4 shrink-0 mt-0.5 text-[#06b6d4]" />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
+          <ul className="flex-1 space-y-2.5">
+            {features.map((feature, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-[#111827]">
+                <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-[#10b981]" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <div className="mt-7">
-        <Link
-          href={`/checkout?${checkoutParams.toString()}`}
-          className={`flex items-center justify-center gap-2 w-full rounded-xl py-3.5 px-6 font-bold text-sm transition-all ${
-            product.featured ? "btn-glow" : "btn-primary"
-          }`}
-        >
-          Select Plan
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        {/* Right - Options & Pricing */}
+        <div className="bg-[#f8fafc] border-t lg:border-t-0 lg:border-l border-[#e5e7eb] p-7 sm:p-8 flex flex-col">
+          <div className="flex items-baseline gap-1 mb-6">
+            <span className="text-4xl font-extrabold text-[#6366f1]" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              ${totalPrice}
+            </span>
+            {tier.period !== "lifetime" && (
+              <span className="text-sm text-[#94a3b8] ml-1">/ {periodLabel(tier.period)}</span>
+            )}
+          </div>
+
+          {activeTiers.length > 1 && (
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-[#0f172a] mb-1.5 uppercase tracking-wider">Duration</label>
+              <select
+                value={selectedTier}
+                onChange={(e) => setSelectedTier(Number(e.target.value))}
+                className="input-field text-sm cursor-pointer"
+              >
+                {activeTiers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} - ${t.price}/{periodLabel(t.period)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {product.options.map((opt) => {
+            const choices = parseChoices(opt.choices);
+            if (choices.length === 0) return null;
+            return (
+              <div key={opt.id} className="mb-4">
+                <label className="block text-xs font-semibold text-[#0f172a] mb-1.5 uppercase tracking-wider">{opt.name}</label>
+                <select
+                  value={selectedOptions[opt.name] || 0}
+                  onChange={(e) => setSelectedOptions((prev) => ({ ...prev, [opt.name]: Number(e.target.value) }))}
+                  className="input-field text-sm cursor-pointer"
+                >
+                  {choices.map((c, i) => (
+                    <option key={i} value={i}>
+                      {c.label}{c.priceAdd > 0 ? ` (+$${c.priceAdd})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+
+          <div className="mt-auto pt-4">
+            <Link
+              href={`/checkout?${checkoutParams.toString()}`}
+              className="btn-glow w-full flex items-center justify-center gap-2 text-center"
+            >
+              Select Plan
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
+interface PageSettings {
+  pricingPageTitle: string;
+  pricingPageSubtitle: string;
+  hidePricingForGuests: boolean;
+}
+
 export default function PricingPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [settings, setSettings] = useState<PageSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("customer_token"));
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => setSettings(d))
+      .catch(() => {});
     fetch("/api/products")
       .then((res) => res.json())
       .then((data) => setProducts(data || []))
@@ -224,48 +240,60 @@ export default function PricingPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const pricingHidden = settings?.hidePricingForGuests && !isLoggedIn;
+
   return (
     <div>
-      <section className="hero-light relative pt-28 pb-14 sm:pt-36 sm:pb-18">
-        <div className="hero-pattern" />
+      <section className="hero-section !py-0 !pt-[160px] !pb-[60px]">
+        <div className="floating-shape shape-1" />
+        <div className="floating-shape shape-2" />
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#7c3aed]/8 border border-[#7c3aed]/15 px-4 py-1.5 mb-5">
-            <span className="h-2 w-2 rounded-full bg-[#06b6d4] pulse-dot" />
-            <span className="text-xs font-semibold text-[#7c3aed] tracking-wide uppercase">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/15 px-4 py-1.5 mb-5">
+            <span className="h-2 w-2 rounded-full bg-[#10b981] pulse-dot" />
+            <span className="text-xs font-semibold text-[#6366f1] tracking-wide uppercase">
               License Renewal
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0f172a]">
-            Choose Your{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] to-[#06b6d4]">
-              License Plan
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0f172a]" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            {(settings?.pricingPageTitle || "Choose Your License Plan").split(" ").slice(0, -2).join(" ")}{" "}
+            <span className="hero-title-gradient">
+              {(settings?.pricingPageTitle || "Choose Your License Plan").split(" ").slice(-2).join(" ")}
             </span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-[#64748b] leading-relaxed">
-            Renew your DashCore platform engine license. Choose the plan that fits your needs.
+            {settings?.pricingPageSubtitle || "Renew your DashCore platform engine license. Choose the plan that fits your needs."}
           </p>
         </div>
       </section>
 
-      <section className="pb-16 sm:pb-24 -mt-8 relative z-10">
-        <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-          {loading ? (
+      <section className="pb-16 sm:pb-24 pt-8">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8">
+          {pricingHidden ? (
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#6366f1]/10 mb-5">
+                <Lock className="h-7 w-7 text-[#6366f1]" />
+              </div>
+              <h2 className="text-xl font-bold text-[#0f172a] mb-2">Sign in to view pricing</h2>
+              <p className="text-[#64748b] mb-6 max-w-md mx-auto">
+                Create an account or sign in to view our plans and pricing.
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Link href="/login" className="btn-primary text-sm">Sign In</Link>
+                <Link href="/register" className="btn-outline text-sm">Create Account</Link>
+              </div>
+            </div>
+          ) : loading ? (
             <div className="flex justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-[#7c3aed]" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#6366f1]" />
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-[#64748b]">No products available yet. Check back soon!</p>
             </div>
           ) : (
-            <div className={`grid grid-cols-1 gap-5 lg:gap-6 ${
-              products.length === 1 ? "max-w-md mx-auto" :
-              products.length === 2 ? "md:grid-cols-2 max-w-3xl mx-auto" :
-              products.length === 3 ? "md:grid-cols-3 max-w-5xl mx-auto" :
-              "md:grid-cols-2 lg:grid-cols-3"
-            }`}>
+            <div className="space-y-6">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductRow key={product.id} product={product} />
               ))}
             </div>
           )}
@@ -276,7 +304,7 @@ export default function PricingPage() {
             </p>
             <p className="text-sm text-[#64748b]">
               Need a custom arrangement?{" "}
-              <Link href="/contact" className="text-[#7c3aed] hover:underline underline-offset-4 font-semibold">
+              <Link href="/contact" className="text-[#6366f1] hover:underline underline-offset-4 font-semibold">
                 Contact us
               </Link>
             </p>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Layers, ShieldCheck, Activity,
-  Server, Radio, ArrowRight, CheckCircle2, Zap, Wifi, Shield, Cpu, Eye, Users,
+  Server, Radio, ArrowRight, CheckCircle2, Wifi, Shield, Cpu, Eye,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
 
@@ -13,6 +13,15 @@ interface HomeSettings {
   heroSubtitle: string;
   heroButtonText: string;
   showProductsOnHome: boolean;
+  showFeaturesSection: boolean;
+  showProtocolsSection: boolean;
+  showCtaSection: boolean;
+  featuresSectionTitle: string;
+  protocolsSectionTitle: string;
+  protocolsSectionSubtitle: string;
+  ctaTitle: string;
+  ctaSubtitle: string;
+  ctaButtonText: string;
 }
 
 interface Product {
@@ -101,63 +110,34 @@ export default function HomePage() {
         <div className="floating-shape shape-3" />
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-up">
-              <h1 className="hero-title">
-                {settings?.heroTitle?.split(" ").slice(0, -2).join(" ") || "DashCore IPTV"}{" "}
-                <span className="hero-title-gradient">
-                  {settings?.heroTitle?.split(" ").slice(-2).join(" ") || "Platform Engine"}
-                </span>
-              </h1>
-              <p className="hero-subtitle mt-5 animate-fade-up anim-d1">
-                {settings?.heroSubtitle || "High-performance streaming infrastructure for global platforms. Renew your license and keep your platform running at full power."}
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3 animate-fade-up anim-d2">
-                <Link href="/pricing" className="btn-glow">
-                  {settings?.heroButtonText || "View Plans"}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link href="/#features" className="btn-outline">
-                  Explore Features
-                </Link>
-              </div>
-            </div>
-
-            <div className="hidden lg:block animate-fade-up anim-d3">
-              <div className="relative bg-white border border-[#e5e7eb] rounded-2xl p-6 space-y-4 shadow-lg"
-                   style={{ boxShadow: "0 20px 40px rgba(0,0,0,0.1)", transform: "perspective(1000px) rotateY(-5deg)", transition: "transform 0.5s ease" }}>
-                <div className="flex items-center gap-3 text-[#6b7280] text-sm">
-                  <Wifi className="h-4 w-4 text-[#6366f1]" />
-                  <span className="font-medium">Live Platform Status</span>
-                  <span className="ml-auto flex items-center gap-1.5 text-xs text-emerald-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 pulse-dot" />
-                    All Systems Operational
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Uptime", value: "99.9%", icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
-                    { label: "Protocols", value: "50+", icon: Radio, color: "text-[#6366f1]", bg: "bg-[#6366f1]/8" },
-                    { label: "Max Connections", value: "1M+", icon: Users, color: "text-[#8b5cf6]", bg: "bg-[#8b5cf6]/8" },
-                    { label: "Response Time", value: "<10ms", icon: Zap, color: "text-amber-600", bg: "bg-amber-50" },
-                  ].map((s) => (
-                    <div key={s.label} className={`${s.bg} rounded-xl p-4 border border-[#e5e7eb]/50`}>
-                      <s.icon className={`h-4 w-4 ${s.color} mb-2`} />
-                      <p className="text-2xl font-bold text-[#111827]">{s.value}</p>
-                      <p className="text-xs text-[#6b7280] mt-0.5">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <div className="max-w-2xl mx-auto text-center animate-fade-up">
+            <h1 className="hero-title">
+              {settings?.heroTitle?.split(" ").slice(0, -2).join(" ") || "DashCore IPTV"}{" "}
+              <span className="hero-title-gradient">
+                {settings?.heroTitle?.split(" ").slice(-2).join(" ") || "Platform Engine"}
+              </span>
+            </h1>
+            <p className="hero-subtitle mt-5 animate-fade-up anim-d1">
+              {settings?.heroSubtitle || "High-performance streaming infrastructure for global platforms. Renew your license and keep your platform running at full power."}
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3 animate-fade-up anim-d2">
+              <Link href="/pricing" className="btn-glow">
+                {settings?.heroButtonText || "View Plans"}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/#features" className="btn-outline">
+                Explore Features
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Features Section ─────────────────── */}
+      {settings?.showFeaturesSection !== false && (
       <section id="features" className="py-20 sm:py-28">
         <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-          <h2 className="section-title mb-14">Powerful Capabilities</h2>
+          <h2 className="section-title mb-14">{settings?.featuresSectionTitle || "Powerful Capabilities"}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((feat) => (
               <div key={feat.title} className="feature-card">
@@ -179,28 +159,28 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Image Slider ────────────────────── */}
       {sliderImages.length > 0 && (
         <section className="py-10 sm:py-16">
           <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-[#e5e7eb]" style={{ aspectRatio: "16/6" }}>
+            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-[#e5e7eb]">
               {sliderImages.map((img, idx) => (
                 <div
                   key={img.id}
-                  className="absolute inset-0 transition-opacity duration-700"
-                  style={{ opacity: idx === currentSlide ? 1 : 0 }}
+                  className={idx === currentSlide ? "block" : "hidden"}
                 >
                   {img.linkUrl ? (
-                    <a href={img.linkUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                      <img src={img.imageUrl} alt={img.title} className="w-full h-full object-cover" />
+                    <a href={img.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                      <img src={img.imageUrl} alt={img.title} className="w-full h-auto block" />
                     </a>
                   ) : (
-                    <img src={img.imageUrl} alt={img.title} className="w-full h-full object-cover" />
+                    <img src={img.imageUrl} alt={img.title} className="w-full h-auto block" />
                   )}
                   {img.title && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                      <p className="text-white font-semibold text-lg">{img.title}</p>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-16 pb-8 px-8">
+                      <p className="text-white font-bold text-xl sm:text-2xl drop-shadow-lg tracking-wide">{img.title}</p>
                     </div>
                   )}
                 </div>
@@ -237,11 +217,12 @@ export default function HomePage() {
       )}
 
       {/* ── Protocol Coverage ────────────────── */}
+      {settings?.showProtocolsSection !== false && (
       <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-          <h2 className="section-title mb-6">Complete Protocol Coverage</h2>
+          <h2 className="section-title mb-6">{settings?.protocolsSectionTitle || "Complete Protocol Coverage"}</h2>
           <p className="text-center text-[#6b7280] mb-14 max-w-lg mx-auto">
-            From ingest to delivery — every protocol and workflow fully supported.
+            {settings?.protocolsSectionSubtitle || "From ingest to delivery — every protocol and workflow fully supported."}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {protocols.map((p) => (
@@ -255,6 +236,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Products Section (conditional) ──── */}
       {settings?.showProductsOnHome !== false && products.length > 0 && (
@@ -315,17 +297,18 @@ export default function HomePage() {
       )}
 
       {/* ── CTA Section ──────────────────────── */}
+      {settings?.showCtaSection !== false && (
       <section className="cta-section">
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold mb-5" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-            Ready to Renew Your License?
+            {settings?.ctaTitle || "Ready to Renew Your License?"}
           </h2>
           <p className="text-lg opacity-90 max-w-xl mx-auto mb-10">
-            Keep your platform running at peak performance. Flexible durations, multiple payment methods.
+            {settings?.ctaSubtitle || "Keep your platform running at peak performance. Flexible durations, multiple payment methods."}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/pricing" className="inline-flex items-center gap-2 bg-white text-[#6366f1] font-semibold px-8 py-3.5 rounded-full shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-              View Pricing <ArrowRight className="h-4 w-4" />
+              {settings?.ctaButtonText || "View Pricing"} <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="https://t.me/dashcore"
@@ -338,6 +321,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 }

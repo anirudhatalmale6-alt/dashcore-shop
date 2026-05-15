@@ -19,6 +19,7 @@ import {
 
 interface Order {
   id: number;
+  orderId: string;
   customerEmail: string;
   customerName: string;
   tierName: string;
@@ -73,7 +74,7 @@ function OrderDetailModal({ order, onClose, onStatusChange }: {
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e2e8f0]">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-[#7c3aed]" />
-            <h2 className="text-sm font-bold">Order #{order.id}</h2>
+            <h2 className="text-sm font-bold">Order {order.orderId}</h2>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-[#f1f5f9] transition-all">
             <X className="h-4 w-4 text-[#64748b]" />
@@ -269,7 +270,7 @@ export default function AdminOrdersPage() {
     try {
       const res = await apiFetch("/api/admin/orders", { method: "PATCH", body: JSON.stringify({ orderId, status }) });
       if (res.ok) {
-        flash("success", `Order #${orderId} marked as ${status}`);
+        flash("success", `Order marked as ${status}`);
         loadOrders();
         if (detailOrder && detailOrder.id === orderId) {
           setDetailOrder({ ...detailOrder, paymentStatus: status });
@@ -337,7 +338,7 @@ export default function AdminOrdersPage() {
                       className="border-b border-[#f8fafc] hover:bg-[#f8fafc] transition-colors cursor-pointer"
                       onClick={() => setDetailOrder(order)}
                     >
-                      <td className="px-5 py-3 text-sm font-mono text-[#64748b]">#{order.id}</td>
+                      <td className="px-5 py-3 text-sm font-mono text-[#64748b]">{order.orderId}</td>
                       <td className="px-5 py-3">
                         <p className="text-sm font-medium">{order.customerName}</p>
                         <p className="text-xs text-[#94a3b8]">{order.customerEmail}</p>

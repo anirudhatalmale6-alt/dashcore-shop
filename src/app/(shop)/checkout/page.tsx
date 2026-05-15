@@ -77,7 +77,7 @@ function CheckoutContent() {
   const [paymentTab, setPaymentTab] = useState<PaymentTab>("stripe");
   const [cryptoCoin, setCryptoCoin] = useState<CryptoCoin>("btc");
 
-  const [orderId, setOrderId] = useState<number | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -131,7 +131,7 @@ function CheckoutContent() {
 
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Failed to create order."); return; }
-      setOrderId(data.id);
+      setOrderId(data.orderId);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -194,7 +194,7 @@ function CheckoutContent() {
           <p className="text-[#64748b] mb-2">Your order is pending payment confirmation.</p>
           <div className="my-5 p-4 rounded-xl bg-[#7c3aed]/5 border border-[#7c3aed]/15">
             <p className="text-xs text-[#64748b] uppercase tracking-wider mb-1 font-medium">Order ID</p>
-            <p className="text-2xl font-mono font-bold text-[#7c3aed]">#{orderId}</p>
+            <p className="text-2xl font-mono font-bold text-[#7c3aed]">{orderId}</p>
           </div>
           <p className="text-sm text-[#64748b] mb-6">
             {paymentTab === "crypto"
