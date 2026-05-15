@@ -171,6 +171,7 @@ export default function AccountPage() {
       // Silently fail - DNS info is supplementary
     } finally {
       setDnsLoading(false);
+      setDnsFetched(true);
     }
   }, [token, authHeaders]);
 
@@ -203,10 +204,10 @@ export default function AccountPage() {
 
   // Fetch DNS instances when services tab is activated
   useEffect(() => {
-    if (tab === "services" && token && dnsInstances.length === 0) {
+    if (tab === "services" && token && !dnsFetched) {
       fetchDnsInstances();
     }
-  }, [tab, token, dnsInstances.length, fetchDnsInstances]);
+  }, [tab, token, dnsFetched, fetchDnsInstances]);
 
   const logout = () => {
     localStorage.removeItem("customer_token");

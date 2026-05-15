@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAdminFromRequest } from "@/lib/adminAuth";
 import { sendCmsReadyEmail, sendOrderConfirmedEmail, sendAccountCreatedEmail } from "@/lib/cmsEmail";
+import { generateInvoicePdf } from "@/lib/invoicePdf";
 import { PaymentStatus } from "@prisma/client";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -172,17 +173,32 @@ export async function PATCH(request: NextRequest) {
       data: updateData,
     });
 
-    // Send order confirmation email immediately when marked as paid
+    // Send order confirmation email with PDF invoice when marked as paid
     if (status === "paid" && existing.paymentStatus !== "paid") {
       try {
+        const invoicePdf = await generateInvoicePdf({
+          orderId: existing.orderId,
+          customerName: existing.customerName,
+          customerEmail: existing.customerEmail,
+          tierName: existing.tierName,
+          tierPrice: Number(existing.tierPrice),
+          optionsPrice: Number(existing.optionsPrice),
+          oneTimeFees: Number(existing.oneTimeFees),
+          totalPrice: Number(existing.totalPrice),
+          paymentMethod: existing.paymentMethod,
+          confirmedAt: new Date(),
+          createdAt: existing.createdAt,
+          selectedOptions: existing.selectedOptions as Record<string, string> | null,
+        });
         await sendOrderConfirmedEmail({
           email: existing.customerEmail,
           name: existing.customerName,
           orderId: existing.orderId,
           tierName: existing.tierName,
           tierPrice: Number(existing.tierPrice),
+          invoicePdf,
         });
-        console.log(`Order confirmation email sent to ${existing.customerEmail}`);
+        console.log(`Order confirmation email with invoice sent to ${existing.customerEmail}`);
       } catch (emailErr) {
         console.error(`Failed to send order confirmation email:`, emailErr);
       }
