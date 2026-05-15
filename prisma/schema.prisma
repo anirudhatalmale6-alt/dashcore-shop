@@ -320,6 +320,84 @@ model CustomerLoginLog {
 }
 
 // ---------------------------------------------------------------------------
+// API Key (for CMS API)
+// ---------------------------------------------------------------------------
+model ApiKey {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  keyPrefix   String    @map("key_prefix") @db.VarChar(10)
+  keyHash     String    @unique @map("key_hash") @db.VarChar(128)
+  secretHash  String    @map("secret_hash") @db.VarChar(128)
+  permissions Json      @default("[]")
+  active      Boolean   @default(true)
+  rateLimit   Int       @default(60) @map("rate_limit")
+  lastUsedAt  DateTime? @map("last_used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([active])
+  @@map("api_keys")
+}
+
+// ---------------------------------------------------------------------------
+// CMS Instance
+// ---------------------------------------------------------------------------
+enum CmsStatus {
+  active
+  suspended
+  expired
+  pending
+}
+
+model CmsInstance {
+  id                 Int       @id @default(autoincrement())
+  cmsId              String    @unique @map("cms_id") @db.VarChar(36)
+  name               String    @db.VarChar(255)
+  domain             String    @db.VarChar(255)
+  status             CmsStatus @default(pending)
+  adminUsername      String    @map("admin_username") @db.VarChar(100)
+  adminPasswordHash  String    @map("admin_password_hash") @db.VarChar(255)
+  adminEmail         String    @map("admin_email") @db.VarChar(255)
+  dnsSettings        Json      @default("{}") @map("dns_settings")
+  settings           Json      @default("{}")
+  subscriptionTier   String?   @map("subscription_tier") @db.VarChar(120)
+  licenseExpiresAt   DateTime? @map("license_expires_at")
+  reminderSchedule   Json      @default("[7, 3, 1]") @map("reminder_schedule")
+  lastReminderSentAt DateTime? @map("last_reminder_sent_at")
+  readyEmailSentAt   DateTime? @map("ready_email_sent_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  users CmsUser[]
+
+  @@index([status])
+  @@index([licenseExpiresAt])
+  @@index([domain])
+  @@map("cms_instances")
+}
+
+// ---------------------------------------------------------------------------
+// CMS User (users belonging to a CMS instance)
+// ---------------------------------------------------------------------------
+model CmsUser {
+  id            Int      @id @default(autoincrement())
+  cmsInstanceId Int      @map("cms_instance_id")
+  username      String   @db.VarChar(100)
+  email         String   @db.VarChar(255)
+  passwordHash  String   @map("password_hash") @db.VarChar(255)
+  role          String   @default("user") @db.VarChar(50)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  cmsInstance CmsInstance @relation(fields: [cmsInstanceId], references: [id], onDelete: Cascade)
+
+  @@unique([cmsInstanceId, username])
+  @@index([cmsInstanceId])
+  @@map("cms_users")
+}
+
+// ---------------------------------------------------------------------------
 // ContactMessage
 // ---------------------------------------------------------------------------
 model ContactMessage {

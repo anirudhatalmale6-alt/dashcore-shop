@@ -15,6 +15,7 @@ import {
   FileText,
   Images,
   Users,
+  Key,
 } from "lucide-react";
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare },
   { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText },
   { key: "slider", label: "Slider", href: "/admin/slider", icon: Images },
+  { key: "api-keys", label: "API Keys", href: "/admin/api-keys", icon: Key },
   { key: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
   { key: "seo", label: "SEO", href: "/admin/seo", icon: Search },
