@@ -62,6 +62,7 @@ export async function PUT(request: NextRequest) {
       "smtpUser",
       "smtpPass",
       "smtpFrom",
+      "smtpFromName",
       "confirmEmailSubject",
       "confirmEmailBody",
       "vatRate",

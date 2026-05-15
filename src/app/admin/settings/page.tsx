@@ -32,6 +32,7 @@ interface SettingsData {
   smtpUser: string;
   smtpPass: string;
   smtpFrom: string;
+  smtpFromName: string;
   confirmEmailSubject: string;
   confirmEmailBody: string;
   vatRate: number;
@@ -165,6 +166,7 @@ export default function AdminSettingsPage() {
         smtpUser: d.smtpUser || "",
         smtpPass: d.smtpPass || "",
         smtpFrom: d.smtpFrom || "",
+        smtpFromName: d.smtpFromName || "",
         confirmEmailSubject: d.confirmEmailSubject || "",
         confirmEmailBody: d.confirmEmailBody || "",
         vatRate: d.vatRate || 0,
@@ -427,9 +429,13 @@ export default function AdminSettingsPage() {
                 <label className="block text-sm font-medium mb-1.5">SMTP Password</label>
                 <input type="password" value={s.smtpPass} onChange={(e) => set("smtpPass", e.target.value)} className="input-field" />
               </div>
-              <div className="sm:col-span-2">
+              <div>
                 <label className="block text-sm font-medium mb-1.5">From Address</label>
                 <input type="email" value={s.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} placeholder="noreply@dashcore.eu" className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Sender Display Name</label>
+                <input type="text" value={s.smtpFromName} onChange={(e) => set("smtpFromName", e.target.value)} placeholder="DashCore Support" className="input-field" />
               </div>
               <div className="sm:col-span-2 pt-2 border-t border-[#e2e8f0]">
                 <SmtpTester token={token} />

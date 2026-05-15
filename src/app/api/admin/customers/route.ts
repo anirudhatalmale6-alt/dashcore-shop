@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAdminFromRequest } from "@/lib/adminAuth";
 
+const CMS_BACKEND_URL = process.env.CMS_BACKEND_URL || "https://backend.dashcore.eu";
+const CMS_API_KEY = process.env.CMS_API_KEY || "";
+const CMS_API_SECRET = process.env.CMS_API_SECRET || "";
+
 export async function GET(request: NextRequest) {
   const admin = getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true, orderId: true, tierName: true, tierPrice: true,
         paymentMethod: true, paymentStatus: true, createdAt: true, confirmedAt: true,
-        totalPrice: true, optionsPrice: true, oneTimeFees: true,
+        totalPrice: true, optionsPrice: true, oneTimeFees: true, notes: true,
       },
     });
 
@@ -59,8 +63,16 @@ export async function GET(request: NextRequest) {
 
   const customersWithOrders = await Promise.all(
     customers.map(async (c) => {
-      const orderCount = await prisma.order.count({ where: { customerEmail: c.email } });
-      return { ...c, orderCount };
+      const [orderCount, cmsOrders] = await Promise.all([
+        prisma.order.count({ where: { customerEmail: c.email } }),
+        prisma.order.count({
+          where: {
+            customerEmail: c.email,
+            notes: { contains: "[CMS Auto-Created]" },
+          },
+        }),
+      ]);
+      return { ...c, orderCount, cmsCount: cmsOrders };
     })
   );
 
@@ -99,4 +111,73 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(request: NextRequest) {
+  const admin = getAdminFromRequest(request);
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const customerId = searchParams.get("id");
+    if (!customerId) return NextResponse.json({ error: "id is required" }, { status: 400 });
+
+    const customer = await prisma.customer.findUnique({ where: { id: Number(customerId) } });
+    if (!customer) return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+
+    // Find orders with CMS notes to extract CMS IDs for deletion
+    const orders = await prisma.order.findMany({
+      where: { customerEmail: customer.email },
+      select: { id: true, notes: true },
+    });
+
+    const cmsDeleted: string[] = [];
+    const cmsFailed: string[] = [];
+
+    // Delete CMS instances linked to this customer's orders
+    for (const order of orders) {
+      if (!order.notes) continue;
+      const match = order.notes.match(/\[CMS Auto-Created\] ID: (CMS-\S+)/);
+      if (!match) continue;
+      const cmsUniqueId = match[1];
+      try {
+        // Look up CMS by unique_id to get its numeric id
+        const listRes = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
+          headers: { "x-api-key": CMS_API_KEY, "x-api-secret": CMS_API_SECRET },
+        });
+        const listData = await listRes.json();
+        const cmsList = listData.data || [];
+        const cms = cmsList.find((c: { unique_id: string }) => c.unique_id === cmsUniqueId);
+        if (cms) {
+          const delRes = await fetch(`${CMS_BACKEND_URL}/api/v1/cms/${cms.id}`, {
+            method: "DELETE",
+            headers: { "x-api-key": CMS_API_KEY, "x-api-secret": CMS_API_SECRET },
+          });
+          if (delRes.ok) {
+            cmsDeleted.push(cmsUniqueId);
+          } else {
+            cmsFailed.push(cmsUniqueId);
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to delete CMS ${cmsUniqueId}:`, err);
+        cmsFailed.push(cmsUniqueId);
+      }
+    }
+
+    // Delete customer login logs, orders, then customer
+    await prisma.customerLoginLog.deleteMany({ where: { customerId: customer.id } });
+    await prisma.order.deleteMany({ where: { customerEmail: customer.email } });
+    await prisma.customer.delete({ where: { id: customer.id } });
+
+    return NextResponse.json({
+      ok: true,
+      message: `Customer ${customer.email} deleted`,
+      cmsDeleted,
+      cmsFailed,
+    });
+  } catch (err) {
+    console.error("Customer delete error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

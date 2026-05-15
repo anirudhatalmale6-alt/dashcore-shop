@@ -108,7 +108,7 @@ export default function CmsInstancesPage() {
   const [activeTab, setActiveTab] = useState<"info" | "users" | "license" | "dns">("info");
   const [copied, setCopied] = useState(false);
 
-  const [form, setForm] = useState({ name: "", dns: "", subdomain: "", subscription_plan: "monthly", admin_username: "admin", admin_email: "", admin_password: "" });
+  const [form, setForm] = useState({ name: "", subdomain: "", subscription_plan: "monthly", admin_username: "admin", admin_email: "", admin_password: "" });
 
   // Edit state for Info tab
   const [editInfo, setEditInfo] = useState({ name: "", subscription_plan: "", admin_login_path: "", reseller_login_path: "", support_plan_id: "" });
@@ -116,9 +116,11 @@ export default function CmsInstancesPage() {
   const [infoSaved, setInfoSaved] = useState(false);
 
   // Edit state for DNS tab
-  const [editDns, setEditDns] = useState({ dns: "", subdomain: "" });
+  const [editDns, setEditDns] = useState({ subdomain: "", customDomain: "" });
   const [savingDns, setSavingDns] = useState(false);
   const [dnsSaved, setDnsSaved] = useState(false);
+  const [savingCustomDomain, setSavingCustomDomain] = useState(false);
+  const [customDomainSaved, setCustomDomainSaved] = useState(false);
 
   // Password change state
   const [newPassword, setNewPassword] = useState("");
@@ -174,7 +176,9 @@ export default function CmsInstancesPage() {
           reseller_login_path: d.reseller_login_path || "",
           support_plan_id: d.support_plan_id != null ? String(d.support_plan_id) : "",
         });
-        setEditDns({ dns: d.dns || "", subdomain: d.subdomain || "" });
+        const autoGenDns = d.subdomain ? `${d.subdomain}.dashcore.eu` : "";
+        const customDomain = d.dns && d.dns !== autoGenDns ? d.dns : "";
+        setEditDns({ subdomain: d.subdomain || "", customDomain });
       }
       if (licRes.success) setLicense(licRes.data);
       setInfoSaved(false);
@@ -186,12 +190,13 @@ export default function CmsInstancesPage() {
   };
 
   const handleCreate = async () => {
-    if (!form.name.trim() || !form.dns.trim() || !form.admin_email.trim()) return;
+    if (!form.name.trim() || !form.subdomain.trim() || !form.admin_email.trim()) return;
     setCreating(true);
     try {
+      const computedDns = `${form.subdomain}.dashcore.eu`;
       const payload = {
         name: form.name,
-        dns: form.dns,
+        dns: computedDns,
         subdomain: form.subdomain,
         subscription_plan: form.subscription_plan,
         adminUsername: form.admin_username,
@@ -201,7 +206,7 @@ export default function CmsInstancesPage() {
       const res = await proxy("/api/v1/cms", "POST", payload);
       if (res.success || res.data) {
         setShowCreate(false);
-        setForm({ name: "", dns: "", subdomain: "", subscription_plan: "monthly", admin_username: "admin", admin_email: "", admin_password: "" });
+        setForm({ name: "", subdomain: "", subscription_plan: "monthly", admin_username: "admin", admin_email: "", admin_password: "" });
         fetchInstances();
       } else {
         alert(res.error || res.message || "Creation failed");
@@ -211,8 +216,8 @@ export default function CmsInstancesPage() {
     }
   };
 
-  const handleDeactivate = async (id: number) => {
-    if (!confirm("Deactivate this CMS instance?")) return;
+  const handleDelete = async (id: number) => {
+    if (!confirm("Permanently delete this CMS instance and all its users? This cannot be undone.")) return;
     await proxy(`/api/v1/cms/${id}`, "DELETE");
     fetchInstances();
     setDetail(null);
@@ -249,13 +254,14 @@ export default function CmsInstancesPage() {
   };
 
   const handleSaveDns = async () => {
-    if (!detail) return;
+    if (!detail || !editDns.subdomain.trim()) return;
     setSavingDns(true);
     setDnsSaved(false);
     try {
+      const autoDns = `${editDns.subdomain}.dashcore.eu`;
       const res = await proxy(`/api/v1/dns/${detail.id}`, "PATCH", {
-        dns: editDns.dns,
-        subdomain: editDns.subdomain || null,
+        dns: autoDns,
+        subdomain: editDns.subdomain,
       });
       if (res.success || res.data) {
         setDnsSaved(true);
@@ -265,6 +271,24 @@ export default function CmsInstancesPage() {
       }
     } finally {
       setSavingDns(false);
+    }
+  };
+
+  const handleSaveCustomDomain = async () => {
+    if (!detail) return;
+    setSavingCustomDomain(true);
+    setCustomDomainSaved(false);
+    try {
+      const dns = editDns.customDomain.trim() || `${editDns.subdomain}.dashcore.eu`;
+      const res = await proxy(`/api/v1/dns/${detail.id}`, "PATCH", { dns });
+      if (res.success || res.data) {
+        setCustomDomainSaved(true);
+        setTimeout(() => setCustomDomainSaved(false), 2500);
+        openDetail(detail.id);
+        fetchInstances();
+      }
+    } finally {
+      setSavingCustomDomain(false);
     }
   };
 
@@ -289,11 +313,16 @@ export default function CmsInstancesPage() {
 
   const handleChangePassword = async () => {
     if (!detail || !newPassword.trim()) return;
+    const adminUser = detail.users?.[0];
+    if (!adminUser) {
+      alert("No admin user found for this CMS instance");
+      return;
+    }
     setSavingPassword(true);
     setPasswordSaved(false);
     try {
-      const res = await proxy(`/api/v1/cms/${detail.id}`, "PATCH", { password: newPassword });
-      if (res.success || res.message === "CMS updated") {
+      const res = await proxy(`/api/v1/users/${detail.id}/${adminUser.id}`, "PATCH", { password: newPassword });
+      if (res.success || res.message?.includes("updated")) {
         setPasswordSaved(true);
         setNewPassword("");
         setTimeout(() => setPasswordSaved(false), 2500);
@@ -439,7 +468,7 @@ export default function CmsInstancesPage() {
                         {inst.active ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
                       </button>
                       <button
-                        onClick={() => handleDeactivate(inst.id)}
+                        onClick={() => handleDelete(inst.id)}
                         className="p-1.5 text-[#94a3b8] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete"
                       >
@@ -757,45 +786,86 @@ export default function CmsInstancesPage() {
                   )}
 
                   {activeTab === "dns" && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-5">
+                      {/* Subdomain section */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#0f172a] mb-3 flex items-center gap-2">
+                          <Server className="h-4 w-4 text-[#7c3aed]" />
+                          Wildcard Subdomain
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs text-[#94a3b8] mb-1">Subdomain</label>
+                            <input
+                              value={editDns.subdomain}
+                              onChange={(e) => setEditDns({ ...editDns, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
+                              placeholder="e.g. client-abc123"
+                              className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-[#94a3b8] mb-1">Auto-DNS (computed)</label>
+                            <div className="relative">
+                              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6366f1]" />
+                              <input
+                                value={editDns.subdomain ? `${editDns.subdomain}.dashcore.eu` : ""}
+                                readOnly
+                                className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#d1d5db] text-sm bg-[#f8fafc] text-[#64748b] cursor-not-allowed outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-3 pt-3">
+                          {dnsSaved && (
+                            <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                              <CheckCircle className="h-3.5 w-3.5" /> Saved
+                            </span>
+                          )}
+                          <button
+                            onClick={handleSaveDns}
+                            disabled={savingDns || !editDns.subdomain.trim()}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors"
+                          >
+                            {savingDns ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            Save Subdomain
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Custom Domain section */}
+                      <div className="border-t border-[#e2e8f0] pt-5">
+                        <h3 className="text-sm font-semibold text-[#0f172a] mb-1 flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-[#7c3aed]" />
+                          Custom Domain
+                        </h3>
+                        <p className="text-xs text-[#94a3b8] mb-3">Optional. When set, the backend DNS will be updated to this domain instead of the auto-generated one.</p>
                         <div>
-                          <label className="block text-xs text-[#94a3b8] mb-1">DNS / Domain</label>
+                          <label className="block text-xs text-[#94a3b8] mb-1">Custom Domain</label>
                           <div className="relative">
                             <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6366f1]" />
                             <input
-                              value={editDns.dns}
-                              onChange={(e) => setEditDns({ ...editDns, dns: e.target.value })}
-                              placeholder="e.g. client.example.com"
+                              value={editDns.customDomain}
+                              onChange={(e) => setEditDns({ ...editDns, customDomain: e.target.value })}
+                              placeholder="e.g. example.com (leave empty to use auto-DNS)"
                               className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
                             />
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-xs text-[#94a3b8] mb-1">Subdomain</label>
-                          <input
-                            value={editDns.subdomain}
-                            onChange={(e) => setEditDns({ ...editDns, subdomain: e.target.value })}
-                            placeholder="e.g. client"
-                            className="w-full px-3 py-2 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
-                          />
+                        <div className="flex items-center justify-end gap-3 pt-3">
+                          {customDomainSaved && (
+                            <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                              <CheckCircle className="h-3.5 w-3.5" /> Saved
+                            </span>
+                          )}
+                          <button
+                            onClick={handleSaveCustomDomain}
+                            disabled={savingCustomDomain}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors"
+                          >
+                            {savingCustomDomain ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            {editDns.customDomain.trim() ? "Save Custom Domain" : "Reset to Auto-DNS"}
+                          </button>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-end gap-3 pt-2">
-                        {dnsSaved && (
-                          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
-                            <CheckCircle className="h-3.5 w-3.5" /> Saved
-                          </span>
-                        )}
-                        <button
-                          onClick={handleSaveDns}
-                          disabled={savingDns || !editDns.dns.trim()}
-                          className="flex items-center gap-2 px-4 py-2 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors"
-                        >
-                          {savingDns ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                          Save DNS
-                        </button>
                       </div>
                     </div>
                   )}
@@ -825,30 +895,36 @@ export default function CmsInstancesPage() {
                 <label className="block text-sm font-medium text-[#374151] mb-1">Name</label>
                 <input
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 20);
+                    setForm({ ...form, name, subdomain: slug || form.subdomain });
+                  }}
                   placeholder="e.g. MyIPTV"
                   className="w-full px-3 py-2.5 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">DNS / Domain</label>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Subdomain</label>
+                <input
+                  value={form.subdomain}
+                  onChange={(e) => setForm({ ...form, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
+                  placeholder="e.g. myiptv"
+                  className="w-full px-3 py-2.5 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                />
+                <p className="text-xs text-[#94a3b8] mt-1">Auto-suggested from name. You can edit it.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">DNS (auto-generated)</label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6366f1]" />
                   <input
-                    value={form.dns}
-                    onChange={(e) => setForm({ ...form, dns: e.target.value })}
-                    placeholder="e.g. client.example.com"
-                    className="w-full px-3 py-2.5 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
+                    value={form.subdomain ? `${form.subdomain}.dashcore.eu` : ""}
+                    readOnly
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#d1d5db] text-sm bg-[#f8fafc] text-[#64748b] cursor-not-allowed outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">Subdomain</label>
-                  <input
-                    value={form.subdomain}
-                    onChange={(e) => setForm({ ...form, subdomain: e.target.value })}
-                    placeholder="e.g. client"
-                    className="w-full px-3 py-2.5 rounded-lg border border-[#d1d5db] text-sm focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] outline-none"
-                  />
-                </div>
+                <p className="text-xs text-[#94a3b8] mt-1">Computed from subdomain. Customers can set a custom domain later.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">Subscription Plan</label>
@@ -900,7 +976,7 @@ export default function CmsInstancesPage() {
               <button onClick={() => setShowCreate(false)} className="px-4 py-2.5 text-sm text-[#64748b] hover:bg-[#f1f5f9] rounded-lg">Cancel</button>
               <button
                 onClick={handleCreate}
-                disabled={creating || !form.name.trim() || !form.dns.trim()}
+                disabled={creating || !form.name.trim() || !form.subdomain.trim()}
                 className="px-4 py-2.5 bg-[#7c3aed] text-white text-sm font-medium rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 flex items-center gap-2"
               >
                 {creating && <Loader2 className="h-4 w-4 animate-spin" />}

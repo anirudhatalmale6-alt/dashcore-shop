@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   LayoutDashboard, Package, User, KeyRound, Trash2, LogOut,
   Loader2, CheckCircle, Clock, XCircle, RefreshCw, Eye, AlertTriangle,
+  Server, Globe, Copy, Check, Save, Edit3,
 } from "lucide-react";
 
 interface OrderItem {
@@ -19,6 +20,7 @@ interface OrderItem {
   selectedOptions: Record<string, string> | null;
   createdAt: string;
   confirmedAt: string | null;
+  notes: string | null;
 }
 
 interface Profile {
@@ -29,6 +31,17 @@ interface Profile {
   lastLogin: string | null;
 }
 
+interface CmsDnsInfo {
+  cmsId: string;
+  backendId: number | null;
+  orderId: string;
+  tierName: string;
+  subdomain: string;
+  autoDns: string;
+  customDomain: string;
+  currentDns: string;
+}
+
 const statusStyles: Record<string, { cls: string; icon: typeof Clock }> = {
   pending: { cls: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
   paid: { cls: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle },
@@ -36,7 +49,42 @@ const statusStyles: Record<string, { cls: string; icon: typeof Clock }> = {
   refunded: { cls: "bg-gray-50 text-gray-600 border-gray-200", icon: RefreshCw },
 };
 
-type Tab = "dashboard" | "orders" | "profile" | "password" | "delete";
+type Tab = "dashboard" | "orders" | "services" | "profile" | "password" | "delete";
+
+function CopyField({ value, masked }: { value: string; masked?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const display = masked && !revealed ? "•".repeat(Math.min(value.length, 12)) : value;
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="font-mono text-sm text-[#0f172a] select-all">{display}</span>
+      {masked && (
+        <button
+          onClick={() => setRevealed(!revealed)}
+          className="text-[#94a3b8] hover:text-[#64748b] transition-colors"
+          title={revealed ? "Hide" : "Reveal"}
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <button
+        onClick={copyToClipboard}
+        className="text-[#94a3b8] hover:text-[#6366f1] transition-colors"
+        title="Copy"
+      >
+        {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+    </div>
+  );
+}
 
 export default function AccountPage() {
   const router = useRouter();
@@ -59,6 +107,16 @@ export default function AccountPage() {
   const [pwdMsg, setPwdMsg] = useState("");
   const [pwdError, setPwdError] = useState("");
   const [pwdSaving, setPwdSaving] = useState(false);
+
+  // DNS / custom domain management
+  const [dnsInstances, setDnsInstances] = useState<CmsDnsInfo[]>([]);
+  const [dnsFetched, setDnsFetched] = useState(false);
+  const [dnsLoading, setDnsLoading] = useState(false);
+  const [editingDomain, setEditingDomain] = useState<string | null>(null);
+  const [domainInput, setDomainInput] = useState("");
+  const [domainSaving, setDomainSaving] = useState(false);
+  const [domainMsg, setDomainMsg] = useState("");
+  const [domainError, setDomainError] = useState("");
 
   // Delete account
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -101,6 +159,54 @@ export default function AccountPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token, router, authHeaders]);
+
+  const fetchDnsInstances = useCallback(async () => {
+    if (!token) return;
+    setDnsLoading(true);
+    try {
+      const res = await fetch("/api/customer/dns", { headers: authHeaders() });
+      const data = await res.json();
+      if (Array.isArray(data)) setDnsInstances(data);
+    } catch {
+      // Silently fail - DNS info is supplementary
+    } finally {
+      setDnsLoading(false);
+    }
+  }, [token, authHeaders]);
+
+  const updateCustomDomain = async (cmsId: string, customDomain: string) => {
+    setDomainSaving(true);
+    setDomainMsg("");
+    setDomainError("");
+    try {
+      const res = await fetch("/api/customer/dns", {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ cmsId, customDomain: customDomain.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDomainMsg("Domain updated successfully.");
+        setEditingDomain(null);
+        setDomainInput("");
+        fetchDnsInstances();
+        setTimeout(() => setDomainMsg(""), 3000);
+      } else {
+        setDomainError(data.error || "Failed to update domain.");
+      }
+    } catch {
+      setDomainError("Network error.");
+    } finally {
+      setDomainSaving(false);
+    }
+  };
+
+  // Fetch DNS instances when services tab is activated
+  useEffect(() => {
+    if (tab === "services" && token && dnsInstances.length === 0) {
+      fetchDnsInstances();
+    }
+  }, [tab, token, dnsInstances.length, fetchDnsInstances]);
 
   const logout = () => {
     localStorage.removeItem("customer_token");
@@ -189,6 +295,7 @@ export default function AccountPage() {
   const tabs: { key: Tab; label: string; icon: typeof User }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "orders", label: "Orders", icon: Package },
+    { key: "services", label: "Services", icon: Server },
     { key: "profile", label: "Profile", icon: User },
     { key: "password", label: "Password", icon: KeyRound },
     { key: "delete", label: "Delete Account", icon: Trash2 },
@@ -256,12 +363,12 @@ export default function AccountPage() {
                         {orders.length}
                       </p>
                     </div>
-                    <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm">
-                      <p className="text-xs text-[#94a3b8] uppercase tracking-wider">Active Licenses</p>
+                    <button onClick={() => setTab("services")} className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm text-left hover:border-[#6366f1]/30 transition-colors w-full">
+                      <p className="text-xs text-[#94a3b8] uppercase tracking-wider">Active Services</p>
                       <p className="text-3xl font-extrabold text-emerald-600 mt-1" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                         {confirmed.length}
                       </p>
-                    </div>
+                    </button>
                     <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm">
                       <p className="text-xs text-[#94a3b8] uppercase tracking-wider">Pending</p>
                       <p className="text-3xl font-extrabold text-amber-600 mt-1" style={{ fontFamily: "'Orbitron', sans-serif" }}>
@@ -455,6 +562,184 @@ export default function AccountPage() {
                   </div>
                 </div>
               )}
+
+              {tab === "services" && (() => {
+                const cmsInstances = orders
+                  .filter((o) => o.notes && o.notes.includes("[CMS Auto-Created]"))
+                  .map((o) => {
+                    const newMatch = o.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Domain: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/);
+                    const oldMatch = !newMatch ? o.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/) : null;
+                    if (newMatch) {
+                      return { orderId: o.orderId, tierName: o.tierName, paymentStatus: o.paymentStatus, cmsId: newMatch[1], domain: newMatch[2], adminUser: newMatch[3], adminPass: newMatch[4].trim() };
+                    }
+                    if (oldMatch) {
+                      return { orderId: o.orderId, tierName: o.tierName, paymentStatus: o.paymentStatus, cmsId: oldMatch[1], domain: null, adminUser: oldMatch[2], adminPass: oldMatch[3].trim() };
+                    }
+                    return null;
+                  })
+                  .filter(Boolean) as { orderId: string; tierName: string; paymentStatus: string; cmsId: string; domain: string | null; adminUser: string; adminPass: string }[];
+
+                return (
+                  <div className="space-y-4">
+                    {domainMsg && (
+                      <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" /> {domainMsg}
+                      </div>
+                    )}
+                    {domainError && (
+                      <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                        <XCircle className="h-4 w-4" /> {domainError}
+                      </div>
+                    )}
+                    <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+                      <div className="p-6 border-b border-[#e2e8f0]">
+                        <h2 className="text-lg font-bold text-[#0f172a]">Your Services</h2>
+                        <p className="text-sm text-[#94a3b8] mt-1">CMS instances provisioned for your paid orders.</p>
+                      </div>
+                      {cmsInstances.length === 0 ? (
+                        <div className="p-8 text-center">
+                          <Server className="h-10 w-10 text-[#cbd5e1] mx-auto mb-3" />
+                          <p className="text-sm text-[#94a3b8]">No active services.</p>
+                          <p className="text-xs text-[#cbd5e1] mt-1">Services appear here once your order payment is confirmed.</p>
+                        </div>
+                      ) : (
+                        <div className="p-6 grid gap-4">
+                          {cmsInstances.map((cms) => {
+                            const st = statusStyles[cms.paymentStatus] || statusStyles.pending;
+                            const StIcon = st.icon;
+                            const dnsInfo = dnsInstances.find((d) => d.cmsId === cms.cmsId);
+                            const isEditing = editingDomain === cms.cmsId;
+
+                            // Derive subdomain/autoDns from parsed domain if DNS API data not yet loaded
+                            const subdomain = dnsInfo?.subdomain || (cms.domain ? cms.domain.replace(/\.dashcore\.eu$/, "") : "");
+                            const autoDns = dnsInfo?.autoDns || cms.domain || "";
+                            const customDomain = dnsInfo?.customDomain || "";
+
+                            return (
+                              <div key={cms.cmsId} className="border border-[#e2e8f0] rounded-xl p-5 hover:border-[#6366f1]/20 transition-colors">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-lg bg-[#6366f1]/10 flex items-center justify-center">
+                                      <Server className="h-5 w-5 text-[#6366f1]" />
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-[#0f172a] font-mono text-sm">{cms.cmsId}</p>
+                                      <p className="text-xs text-[#94a3b8]">{cms.tierName} &middot; Order {cms.orderId}</p>
+                                    </div>
+                                  </div>
+                                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${st.cls}`}>
+                                    <StIcon className="h-3 w-3" />
+                                    {cms.paymentStatus.charAt(0).toUpperCase() + cms.paymentStatus.slice(1)}
+                                  </span>
+                                </div>
+
+                                {/* Domain info */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
+                                  <div>
+                                    <p className="text-xs text-[#94a3b8] mb-1">Subdomain</p>
+                                    <span className="font-mono text-sm text-[#0f172a]">{subdomain || "N/A"}</span>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-[#94a3b8] mb-1">Auto-DNS</p>
+                                    <a
+                                      href={autoDns ? `https://${autoDns}` : "#"}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 text-[#6366f1] hover:text-[#4f46e5] font-medium hover:underline"
+                                    >
+                                      <Globe className="h-3.5 w-3.5" />
+                                      {autoDns || "N/A"}
+                                    </a>
+                                  </div>
+                                </div>
+
+                                {/* Custom domain */}
+                                <div className="border-t border-[#f1f5f9] pt-3 mb-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs text-[#94a3b8]">Custom Domain</p>
+                                    {!isEditing && (
+                                      <button
+                                        onClick={() => {
+                                          setEditingDomain(cms.cmsId);
+                                          setDomainInput(customDomain);
+                                          setDomainMsg("");
+                                          setDomainError("");
+                                        }}
+                                        className="text-xs text-[#6366f1] hover:text-[#4f46e5] font-medium flex items-center gap-1"
+                                      >
+                                        <Edit3 className="h-3 w-3" />
+                                        {customDomain ? "Change" : "Set custom domain"}
+                                      </button>
+                                    )}
+                                  </div>
+                                  {isEditing ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className="relative flex-1">
+                                        <Globe className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#94a3b8]" />
+                                        <input
+                                          value={domainInput}
+                                          onChange={(e) => setDomainInput(e.target.value)}
+                                          placeholder="example.com (leave empty to remove)"
+                                          className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-[#d1d5db] text-sm focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1] outline-none"
+                                          disabled={domainSaving}
+                                        />
+                                      </div>
+                                      <button
+                                        onClick={() => updateCustomDomain(cms.cmsId, domainInput)}
+                                        disabled={domainSaving}
+                                        className="flex items-center gap-1 px-3 py-1.5 bg-[#6366f1] text-white text-xs font-medium rounded-lg hover:bg-[#4f46e5] disabled:opacity-50 transition-colors"
+                                      >
+                                        {domainSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={() => { setEditingDomain(null); setDomainInput(""); setDomainError(""); }}
+                                        className="px-2 py-1.5 text-xs text-[#64748b] hover:bg-[#f1f5f9] rounded-lg"
+                                        disabled={domainSaving}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  ) : customDomain ? (
+                                    <a
+                                      href={`https://${customDomain}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 text-[#6366f1] hover:text-[#4f46e5] font-medium hover:underline text-sm"
+                                    >
+                                      <Globe className="h-3.5 w-3.5" />
+                                      {customDomain}
+                                    </a>
+                                  ) : (
+                                    <span className="text-sm text-[#cbd5e1]">Not set</span>
+                                  )}
+                                </div>
+
+                                {/* Admin credentials */}
+                                <div className="border-t border-[#f1f5f9] pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                  <div>
+                                    <p className="text-xs text-[#94a3b8] mb-1">Admin Username</p>
+                                    <CopyField value={cms.adminUser} />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-[#94a3b8] mb-1">Admin Password</p>
+                                    <CopyField value={cms.adminPass} masked />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {dnsLoading && (
+                        <div className="px-6 pb-4 flex items-center gap-2 text-xs text-[#94a3b8]">
+                          <Loader2 className="h-3 w-3 animate-spin" /> Loading domain details...
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {tab === "profile" && (
                 <div className="bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-sm">

@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Server,
+  Trash2,
 } from "lucide-react";
 
 interface Order {
@@ -333,6 +334,21 @@ export default function AdminOrdersPage() {
     } catch { flash("error", "Failed to update order"); }
   };
 
+  const deleteOrder = async (id: number, orderCode: string) => {
+    if (!confirm(`Permanently delete order ${orderCode}? This cannot be undone.`)) return;
+    try {
+      const res = await apiFetch(`/api/admin/orders?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        flash("success", `Order ${orderCode} deleted`);
+        loadOrders();
+        if (detailOrder?.id === id) setDetailOrder(null);
+      } else {
+        flash("error", data.error || "Failed to delete");
+      }
+    } catch { flash("error", "Failed to delete order"); }
+  };
+
   return (
     <AdminShell>
       <div className="flex items-center justify-between mb-6">
@@ -403,12 +419,21 @@ export default function AdminOrdersPage() {
                       <td className="px-5 py-3"><StatusBadge status={order.paymentStatus} /></td>
                       <td className="px-5 py-3 text-xs text-[#94a3b8]">{new Date(order.createdAt).toLocaleDateString()}</td>
                       <td className="px-5 py-3 text-right">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setDetailOrder(order); }}
-                          className="text-xs px-2.5 py-1 rounded-md bg-[#f8fafc] text-[#64748b] border border-[#e2e8f0] hover:bg-[#f1f5f9] transition-all"
-                        >
-                          <FileText className="h-3.5 w-3.5 inline mr-1" />View
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDetailOrder(order); }}
+                            className="text-xs px-2.5 py-1 rounded-md bg-[#f8fafc] text-[#64748b] border border-[#e2e8f0] hover:bg-[#f1f5f9] transition-all"
+                          >
+                            <FileText className="h-3.5 w-3.5 inline mr-1" />View
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteOrder(order.id, order.orderId); }}
+                            className="p-1.5 text-[#94a3b8] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete order"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

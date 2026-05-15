@@ -17,6 +17,7 @@ import {
   Users,
   Key,
   Server,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { key: "cms-instances", label: "CMS Instances", href: "/admin/cms-instances", icon: Server },
   { key: "api-keys", label: "API Keys", href: "/admin/api-keys", icon: Key },
   { key: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { key: "email-templates", label: "Email Templates", href: "/admin/email-templates", icon: Mail },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
   { key: "seo", label: "SEO", href: "/admin/seo", icon: Search },
 ];

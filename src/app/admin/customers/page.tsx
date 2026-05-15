@@ -6,7 +6,7 @@ import AdminShell from "@/components/AdminShell";
 import {
   Users, Loader2, Search, CheckCircle, XCircle, AlertCircle,
   Ban, ShieldCheck, ShieldOff, Eye, ChevronLeft, ChevronRight,
-  Clock, Globe, Package, X, RefreshCw,
+  Clock, Globe, Package, X, RefreshCw, Trash2, Server, Copy, Check, ExternalLink,
 } from "lucide-react";
 
 interface CustomerSummary {
@@ -19,6 +19,7 @@ interface CustomerSummary {
   createdAt: string;
   lastLogin: string | null;
   orderCount: number;
+  cmsCount: number;
   _count: { loginLogs: number };
 }
 
@@ -39,6 +40,71 @@ interface OrderSummary {
   paymentStatus: string;
   createdAt: string;
   confirmedAt: string | null;
+  notes: string | null;
+}
+
+interface CmsInfo {
+  cmsId: string;
+  domain: string | null;
+  adminUser: string;
+  adminPass: string;
+  orderId: string;
+  tierName: string;
+}
+
+function parseCmsFromOrders(orders: OrderSummary[]): CmsInfo[] {
+  return orders
+    .filter((o) => o.notes && o.notes.includes("[CMS Auto-Created]"))
+    .map((o) => {
+      const newMatch = o.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Domain: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/);
+      const oldMatch = !newMatch ? o.notes!.match(/\[CMS Auto-Created\] ID: ([^\s|]+)\s*\|\s*Admin: ([^\s/]+)\s*\/\s*(.+)/) : null;
+      if (newMatch) {
+        return { cmsId: newMatch[1], domain: newMatch[2], adminUser: newMatch[3], adminPass: newMatch[4].trim(), orderId: o.orderId, tierName: o.tierName };
+      }
+      if (oldMatch) {
+        return { cmsId: oldMatch[1], domain: null, adminUser: oldMatch[2], adminPass: oldMatch[3].trim(), orderId: o.orderId, tierName: o.tierName };
+      }
+      return null;
+    })
+    .filter(Boolean) as CmsInfo[];
+}
+
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button onClick={copy} className="text-[#94a3b8] hover:text-[#7c3aed] transition-colors" title="Copy">
+      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+    </button>
+  );
+}
+
+function MaskedField({ value }: { value: string }) {
+  const [revealed, setRevealed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const display = revealed ? value : "•".repeat(Math.min(value.length, 12));
+  const copy = () => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="font-mono text-xs">{display}</span>
+      <button onClick={() => setRevealed(!revealed)} className="text-[#94a3b8] hover:text-[#64748b] transition-colors" title={revealed ? "Hide" : "Reveal"}>
+        <Eye className="h-3 w-3" />
+      </button>
+      <button onClick={copy} className="text-[#94a3b8] hover:text-[#7c3aed] transition-colors" title="Copy">
+        {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+      </button>
+    </span>
+  );
 }
 
 interface CustomerDetail {
@@ -77,9 +143,10 @@ export default function AdminCustomersPage() {
   const [detailCustomer, setDetailCustomer] = useState<CustomerDetail | null>(null);
   const [detailOrders, setDetailOrders] = useState<OrderSummary[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detailTab, setDetailTab] = useState<"info" | "orders" | "logins">("info");
+  const [detailTab, setDetailTab] = useState<"info" | "orders" | "cms" | "logins">("info");
   const [banReason, setBanReason] = useState("");
   const [showBanInput, setShowBanInput] = useState(false);
+  const [deletingCms, setDeletingCms] = useState<string | null>(null);
 
   useEffect(() => {
     const t = localStorage.getItem("dashcore_admin_token");
@@ -149,6 +216,52 @@ export default function AdminCustomersPage() {
     } catch { flash("error", "Action failed"); }
   };
 
+  const deleteCustomer = async (id: number, email: string) => {
+    if (!confirm(`Permanently delete customer ${email}?\nThis will also delete all their orders and CMS instances. This cannot be undone.`)) return;
+    try {
+      const res = await apiFetch(`/api/admin/customers?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        const cmsInfo = data.cmsDeleted?.length ? ` (${data.cmsDeleted.length} CMS deleted)` : "";
+        flash("success", `Customer ${email} deleted${cmsInfo}`);
+        loadCustomers();
+        setDetailCustomer(null);
+      } else {
+        flash("error", data.error || "Failed to delete");
+      }
+    } catch { flash("error", "Failed to delete customer"); }
+  };
+
+  const deleteCmsInstance = async (cmsId: string) => {
+    if (!confirm(`Delete CMS instance ${cmsId}? This will destroy the instance and cannot be undone.`)) return;
+    setDeletingCms(cmsId);
+    try {
+      // First look up the CMS numeric ID from the backend
+      const listRes = await apiFetch(`/api/admin/cms-proxy?path=/api/v1/cms`);
+      const listData = await listRes.json();
+      const cmsList = listData.data || [];
+      const cms = cmsList.find((c: { unique_id: string }) => c.unique_id === cmsId);
+      if (!cms) {
+        flash("error", `CMS instance ${cmsId} not found in backend`);
+        setDeletingCms(null);
+        return;
+      }
+      const delRes = await apiFetch(`/api/admin/cms-proxy?path=/api/v1/cms/${cms.id}`, { method: "DELETE" });
+      if (delRes.ok) {
+        flash("success", `CMS instance ${cmsId} deleted`);
+        // Refresh the detail to update orders/notes
+        if (detailCustomer) openDetail(detailCustomer.id);
+        loadCustomers();
+      } else {
+        flash("error", `Failed to delete CMS instance ${cmsId}`);
+      }
+    } catch {
+      flash("error", `Failed to delete CMS instance ${cmsId}`);
+    } finally {
+      setDeletingCms(null);
+    }
+  };
+
   return (
     <AdminShell>
       <div className="flex items-center justify-between mb-6">
@@ -199,6 +312,7 @@ export default function AdminCustomersPage() {
                     <th className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">Customer</th>
                     <th className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">Status</th>
                     <th className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">Orders</th>
+                    <th className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">CMS</th>
                     <th className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">Logins</th>
                     <th className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">Last Login</th>
                     <th className="text-left text-xs font-medium text-[#94a3b8] uppercase tracking-wider px-5 py-3">Joined</th>
@@ -214,6 +328,15 @@ export default function AdminCustomersPage() {
                       </td>
                       <td className="px-5 py-3"><StatusBadge active={c.active} banned={c.banned} /></td>
                       <td className="px-5 py-3 text-sm text-[#64748b]">{c.orderCount}</td>
+                      <td className="px-5 py-3 text-sm">
+                        {c.cmsCount > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#7c3aed]/10 text-[#7c3aed] border border-[#7c3aed]/20">
+                            <Server className="h-3 w-3" />{c.cmsCount}
+                          </span>
+                        ) : (
+                          <span className="text-[#cbd5e1]">0</span>
+                        )}
+                      </td>
                       <td className="px-5 py-3 text-sm text-[#64748b]">{c._count.loginLogs}</td>
                       <td className="px-5 py-3 text-xs text-[#94a3b8]">{c.lastLogin ? formatDate(c.lastLogin) : "Never"}</td>
                       <td className="px-5 py-3 text-xs text-[#94a3b8]">{new Date(c.createdAt).toLocaleDateString()}</td>
@@ -293,6 +416,9 @@ export default function AdminCustomersPage() {
                       <ShieldCheck className="h-3.5 w-3.5" /> Activate
                     </button>
                   )}
+                  <button onClick={() => deleteCustomer(detailCustomer.id, detailCustomer.email)} className="text-xs px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all font-medium flex items-center gap-1 ml-auto">
+                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                  </button>
                 </div>
 
                 {detailCustomer.banReason && (
@@ -303,11 +429,15 @@ export default function AdminCustomersPage() {
 
                 {/* Tabs */}
                 <div className="px-6 pt-3 border-b border-[#e2e8f0] flex gap-4">
-                  {(["info", "orders", "logins"] as const).map((t) => (
-                    <button key={t} onClick={() => setDetailTab(t)} className={`pb-2.5 text-xs font-medium border-b-2 transition-all ${detailTab === t ? "border-[#7c3aed] text-[#7c3aed]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"}`}>
-                      {t === "info" ? "Info" : t === "orders" ? `Orders (${detailOrders.length})` : `Login History (${detailCustomer.loginLogs.length})`}
-                    </button>
-                  ))}
+                  {(["info", "orders", "cms", "logins"] as const).map((t) => {
+                    const cmsCount = parseCmsFromOrders(detailOrders).length;
+                    const label = t === "info" ? "Info" : t === "orders" ? `Orders (${detailOrders.length})` : t === "cms" ? `CMS (${cmsCount})` : `Login History (${detailCustomer.loginLogs.length})`;
+                    return (
+                      <button key={t} onClick={() => setDetailTab(t)} className={`pb-2.5 text-xs font-medium border-b-2 transition-all ${detailTab === t ? "border-[#7c3aed] text-[#7c3aed]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"}`}>
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div className="p-6">
@@ -382,6 +512,84 @@ export default function AdminCustomersPage() {
                       </div>
                     )
                   )}
+
+                  {detailTab === "cms" && (() => {
+                    const cmsInstances = parseCmsFromOrders(detailOrders);
+                    return cmsInstances.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Server className="h-10 w-10 text-[#cbd5e1] mx-auto mb-2" />
+                        <p className="text-sm text-[#94a3b8]">No CMS instances</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {cmsInstances.map((cms) => (
+                          <div key={cms.cmsId} className="border border-[#e2e8f0] rounded-xl p-4 hover:border-[#7c3aed]/20 transition-colors">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-2.5">
+                                <div className="h-8 w-8 rounded-lg bg-[#7c3aed]/10 flex items-center justify-center">
+                                  <Server className="h-4 w-4 text-[#7c3aed]" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold font-mono text-[#0f172a]">{cms.cmsId}</p>
+                                  <p className="text-[10px] text-[#94a3b8]">{cms.tierName} &middot; Order {cms.orderId}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <CheckCircle className="h-2.5 w-2.5" /> Active
+                                </span>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                              {cms.domain && (
+                                <div>
+                                  <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Domain</p>
+                                  <a
+                                    href={cms.domain.startsWith("http") ? cms.domain : `https://${cms.domain}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#6d28d9] font-medium hover:underline"
+                                  >
+                                    <Globe className="h-3 w-3" />
+                                    {cms.domain}
+                                    <ExternalLink className="h-2.5 w-2.5" />
+                                  </a>
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Admin Username</p>
+                                <span className="inline-flex items-center gap-1.5 font-mono">
+                                  {cms.adminUser}
+                                  <CopyButton value={cms.adminUser} />
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-[#94a3b8] uppercase tracking-wider mb-0.5">Admin Password</p>
+                                <MaskedField value={cms.adminPass} />
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-[#f1f5f9] flex items-center gap-2">
+                              <a
+                                href={`/admin/cms-instances?search=${encodeURIComponent(cms.cmsId)}`}
+                                className="text-[10px] px-2.5 py-1 rounded-md bg-[#f8fafc] text-[#64748b] border border-[#e2e8f0] hover:bg-[#f1f5f9] transition-all font-medium inline-flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Eye className="h-3 w-3" /> View in CMS Panel
+                              </a>
+                              <button
+                                onClick={() => deleteCmsInstance(cms.cmsId)}
+                                disabled={deletingCms === cms.cmsId}
+                                className="text-[10px] px-2.5 py-1 rounded-md bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all font-medium inline-flex items-center gap-1 disabled:opacity-50"
+                              >
+                                {deletingCms === cms.cmsId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                                Delete CMS
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {detailTab === "logins" && (
                     detailCustomer.loginLogs.length === 0 ? (

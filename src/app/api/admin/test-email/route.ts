@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
       tls: { rejectUnauthorized: false },
     });
 
-    const from = settings.smtpFrom || settings.contactEmail || "noreply@dashcore.eu";
+    const email = settings.smtpFrom || settings.contactEmail || "noreply@dashcore.eu";
+    const from = settings.smtpFromName ? `"${settings.smtpFromName}" <${email}>` : email;
 
     await transport.sendMail({
       from,

@@ -179,6 +179,7 @@ model SiteSettings {
   smtpUser             String  @default("") @map("smtp_user") @db.VarChar(255)
   smtpPass             String  @default("") @map("smtp_pass") @db.VarChar(255)
   smtpFrom             String  @default("") @map("smtp_from") @db.VarChar(255)
+  smtpFromName         String  @default("") @map("smtp_from_name") @db.VarChar(255)
 
   // Email templates
   confirmEmailSubject  String  @default("Order Confirmation") @map("confirm_email_subject") @db.VarChar(500)

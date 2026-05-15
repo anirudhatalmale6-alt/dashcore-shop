@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendOrderPlacedEmail, sendAccountCreatedEmail } from "@/lib/cmsEmail";
 import { PaymentMethod, CryptoCurrency } from "@prisma/client";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -96,6 +97,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Send order placed email
+    try {
+      await sendOrderPlacedEmail({
+        email: customerEmail.trim(),
+        name: customerName.trim(),
+        orderId,
+        tierName: tier.name,
+        totalPrice,
+        paymentMethod,
+      });
+      console.log(`Order placed email sent to ${customerEmail}`);
+    } catch (emailErr) {
+      console.error("Failed to send order placed email:", emailErr);
+    }
+
     // Auto-create customer account if not exists
     try {
       const existingCustomer = await prisma.customer.findUnique({
@@ -112,6 +128,17 @@ export async function POST(request: NextRequest) {
             passwordHash,
           },
         });
+        // Send account credentials email
+        try {
+          await sendAccountCreatedEmail({
+            email: customerEmail.trim(),
+            name: customerName.trim(),
+            password: rawPassword,
+          });
+          console.log(`Account created email sent to ${customerEmail}`);
+        } catch (emailErr) {
+          console.error("Failed to send account created email:", emailErr);
+        }
       }
     } catch (custErr) {
       console.error("Customer auto-creation error (non-fatal):", custErr);

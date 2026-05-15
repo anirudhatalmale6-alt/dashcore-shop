@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAdminFromRequest } from "@/lib/adminAuth";
-import { sendCmsReadyEmail, sendOrderConfirmedEmail } from "@/lib/cmsEmail";
+import { sendCmsReadyEmail, sendOrderConfirmedEmail, sendAccountCreatedEmail } from "@/lib/cmsEmail";
 import { PaymentStatus } from "@prisma/client";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -43,7 +43,6 @@ async function createCmsInstance(order: {
   const domain = `${subdomain}.dashcore.eu`;
 
   const adminEmail = `admin_${suffix}@${subdomain}.dashcore.eu`;
-  const adminUsername = `admin_${suffix}`;
 
   const res = await fetch(`${CMS_BACKEND_URL}/api/v1/cms`, {
     method: "POST",
@@ -57,7 +56,7 @@ async function createCmsInstance(order: {
       dns: domain,
       subdomain,
       subscription_plan: subscriptionPlan,
-      adminUsername,
+      adminUsername: "admin",
       adminEmail,
       adminPassword: adminPassword,
     }),
@@ -68,7 +67,7 @@ async function createCmsInstance(order: {
     return { error: `CMS API responded ${res.status}: ${JSON.stringify(data)}` };
   }
   const cmsData = data.data || data;
-  return { unique_id: cmsData.unique_id || cmsData.id, adminUsername, adminPassword, domain };
+  return { unique_id: cmsData.unique_id || cmsData.id, adminUsername: "admin", adminPassword, domain };
 }
 
 export async function GET(request: NextRequest) {
@@ -253,6 +252,16 @@ export async function PATCH(request: NextRequest) {
             },
           });
           console.log(`Customer account created for ${existing.customerEmail}`);
+          try {
+            await sendAccountCreatedEmail({
+              email: existing.customerEmail,
+              name: existing.customerName,
+              password: customerPassword,
+            });
+            console.log(`Account created email sent to ${existing.customerEmail}`);
+          } catch (emailErr) {
+            console.error("Failed to send account created email:", emailErr);
+          }
         }
       } catch (custErr) {
         console.error(`Customer creation error:`, custErr);
@@ -270,5 +279,32 @@ export async function PATCH(request: NextRequest) {
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const admin = getAdminFromRequest(request);
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const orderId = searchParams.get("id");
+
+    if (!orderId) {
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+
+    const order = await prisma.order.findUnique({ where: { id: Number(orderId) } });
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    await prisma.order.delete({ where: { id: Number(orderId) } });
+    return NextResponse.json({ ok: true, message: `Order ${order.orderId} deleted` });
+  } catch (err) {
+    console.error("Order delete error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

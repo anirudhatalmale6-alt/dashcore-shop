@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
       selectedOptions: true,
       createdAt: true,
       confirmedAt: true,
+      notes: true,
     },
   });
 
