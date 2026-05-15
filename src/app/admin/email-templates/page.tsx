@@ -14,6 +14,10 @@ import {
   UserPlus,
   Server,
   ClipboardCheck,
+  KeyRound,
+  Clock,
+  XCircle,
+  Ban,
 } from "lucide-react";
 
 interface TemplateData {
@@ -26,6 +30,10 @@ interface AllTemplates {
   account_created: TemplateData;
   order_confirmed: TemplateData;
   cms_ready: TemplateData;
+  password_changed: TemplateData;
+  license_reminder: TemplateData;
+  license_expired: TemplateData;
+  service_suspended: TemplateData;
 }
 
 type TemplateKey = keyof AllTemplates;
@@ -87,6 +95,55 @@ const TEMPLATE_INFO: TemplateInfo[] = [
       "{{domain}}",
       "{{adminUsername}}",
       "{{adminPassword}}",
+    ],
+  },
+  {
+    key: "password_changed",
+    name: "Password Changed",
+    description: "Sent when admin changes a CMS instance password.",
+    icon: KeyRound,
+    placeholders: [
+      "{{customerName}}",
+      "{{cmsId}}",
+      "{{domain}}",
+      "{{adminUsername}}",
+      "{{newPassword}}",
+    ],
+  },
+  {
+    key: "license_reminder",
+    name: "License Reminder",
+    description: "Sent when a CMS license is about to expire (reminder notification).",
+    icon: Clock,
+    placeholders: [
+      "{{customerName}}",
+      "{{cmsId}}",
+      "{{domain}}",
+      "{{daysRemaining}}",
+      "{{expiryDate}}",
+      "{{urgency}}",
+    ],
+  },
+  {
+    key: "license_expired",
+    name: "License Expired",
+    description: "Sent when a CMS license has expired and service is suspended.",
+    icon: XCircle,
+    placeholders: [
+      "{{customerName}}",
+      "{{cmsId}}",
+      "{{domain}}",
+    ],
+  },
+  {
+    key: "service_suspended",
+    name: "Service Suspended",
+    description: "Sent when a CMS instance is manually deactivated by admin.",
+    icon: Ban,
+    placeholders: [
+      "{{customerName}}",
+      "{{cmsId}}",
+      "{{domain}}",
     ],
   },
 ];
@@ -195,10 +252,14 @@ export default function EmailTemplatesPage() {
       "{{email}}": "john@example.com",
       "{{password}}": "SecureP@ss123",
       "{{siteName}}": "DashCore",
-      "{{cmsId}}": "cms-abc123",
+      "{{cmsId}}": "CMS-0040-Z3LE",
       "{{domain}}": "example.dashcore.eu",
       "{{adminUsername}}": "admin",
       "{{adminPassword}}": "TempP@ss456",
+      "{{newPassword}}": "NewP@ss789",
+      "{{daysRemaining}}": "3",
+      "{{expiryDate}}": "May 20, 2026",
+      "{{urgency}}": "URGENT: ",
     };
 
     let html = t.body;
