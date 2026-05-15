@@ -324,6 +324,20 @@ export default function CmsInstancesPage() {
       const res = await proxy(`/api/v1/users/${detail.id}/${adminUser.id}`, "PATCH", { password: newPassword });
       if (res.success || res.message?.includes("updated")) {
         setPasswordSaved(true);
+        try {
+          await fetch("/api/admin/notify-password-change", {
+            method: "POST",
+            headers: headers(),
+            body: JSON.stringify({
+              cmsId: detail.unique_id,
+              domain: detail.dns,
+              adminUsername: adminUser.username,
+              newPassword,
+            }),
+          });
+        } catch {
+          // email notification is best-effort
+        }
         setNewPassword("");
         setTimeout(() => setPasswordSaved(false), 2500);
       } else {

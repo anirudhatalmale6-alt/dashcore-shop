@@ -319,3 +319,30 @@ export async function sendLicenseExpiredEmail(opts: {
 
   return true;
 }
+
+export async function sendPasswordChangedEmail(opts: {
+  email: string;
+  name: string;
+  cmsId: string;
+  domain: string;
+  adminUsername: string;
+  newPassword: string;
+}) {
+  const transport = await getSmtpTransport();
+  if (!transport) return false;
+
+  const from = await getFromAddress();
+  const settings = await prisma.siteSettings.findUnique({ where: { id: 1 } });
+  const siteName = settings?.siteName || "DashCore";
+
+  const panelUrl = `https://${opts.domain}`;
+
+  await transport.sendMail({
+    from,
+    to: opts.email,
+    subject: `Password Changed - ${opts.cmsId}`,
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#f8fafc;font-family:Arial,Helvetica,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc"><tr><td align="center" style="padding:40px 20px"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><tr><td style="background-color:#6366f1;padding:28px 40px;text-align:center"><h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:0.5px">${siteName}</h1></td></tr><tr><td style="padding:40px"><h2 style="margin:0 0 20px 0;color:#1e293b;font-size:22px;font-weight:600">Password Changed</h2><p style="margin:0 0 16px 0;color:#475569;font-size:15px;line-height:1.6">Hello ${opts.name},</p><p style="margin:0 0 24px 0;color:#475569;font-size:15px;line-height:1.6">The admin password for your CMS instance <strong style="color:#6366f1">${opts.cmsId}</strong> has been updated. Below are your new login details.</p><table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 24px 0;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0"><tr><td style="background-color:#6366f1;color:#ffffff;padding:10px 16px;font-size:14px;font-weight:600;width:140px">CMS ID</td><td style="padding:10px 16px;color:#1e293b;font-size:14px;border-bottom:1px solid #e2e8f0">${opts.cmsId}</td></tr><tr><td style="background-color:#6366f1;color:#ffffff;padding:10px 16px;font-size:14px;font-weight:600">Panel URL</td><td style="padding:10px 16px;color:#1e293b;font-size:14px;border-bottom:1px solid #e2e8f0"><a href="${panelUrl}" style="color:#6366f1;text-decoration:none">${panelUrl}</a></td></tr><tr><td style="background-color:#6366f1;color:#ffffff;padding:10px 16px;font-size:14px;font-weight:600">Username</td><td style="padding:10px 16px;color:#1e293b;font-size:14px;border-bottom:1px solid #e2e8f0">${opts.adminUsername}</td></tr><tr><td style="background-color:#6366f1;color:#ffffff;padding:10px 16px;font-size:14px;font-weight:600">New Password</td><td style="padding:10px 16px;color:#1e293b;font-size:14px">${opts.newPassword}</td></tr></table><div style="background-color:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 16px;margin:0 0 20px 0"><p style="margin:0;color:#dc2626;font-size:14px;font-weight:600">Keep these credentials safe. Do not share them with anyone.</p></div><p style="margin:0;color:#475569;font-size:15px;line-height:1.6">If you did not request this change, please contact our support team immediately.</p></td></tr><tr><td style="background-color:#f8fafc;padding:24px 40px;text-align:center;border-top:1px solid #e2e8f0"><p style="margin:0;color:#94a3b8;font-size:12px">${siteName} - IPTV Platform Engine</p></td></tr></table></td></tr></table></body></html>`,
+  });
+
+  return true;
+}
