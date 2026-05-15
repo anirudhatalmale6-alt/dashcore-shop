@@ -18,6 +18,7 @@ async function getSmtpTransport() {
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,
+    tls: { rejectUnauthorized: false },
   });
 }
 

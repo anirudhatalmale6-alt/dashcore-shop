@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
+      tls: { rejectUnauthorized: false },
     });
 
     const from = settings.smtpFrom || settings.contactEmail || "noreply@dashcore.eu";
