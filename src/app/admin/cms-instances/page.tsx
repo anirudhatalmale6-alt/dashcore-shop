@@ -189,11 +189,24 @@ export default function CmsInstancesPage() {
     if (!form.name.trim() || !form.dns.trim() || !form.admin_email.trim()) return;
     setCreating(true);
     try {
-      const res = await proxy("/api/v1/cms", "POST", form);
+      const suffix = Math.random().toString(36).slice(2, 8);
+      const username = form.admin_username === "admin" ? `admin_${suffix}` : form.admin_username;
+      const payload = {
+        name: form.name,
+        dns: form.dns,
+        subdomain: form.subdomain,
+        subscription_plan: form.subscription_plan,
+        adminUsername: username,
+        adminEmail: form.admin_email,
+        adminPassword: form.admin_password || undefined,
+      };
+      const res = await proxy("/api/v1/cms", "POST", payload);
       if (res.success || res.data) {
         setShowCreate(false);
         setForm({ name: "", dns: "", subdomain: "", subscription_plan: "monthly", admin_username: "admin", admin_email: "", admin_password: "" });
         fetchInstances();
+      } else {
+        alert(res.error || res.message || "Creation failed");
       }
     } finally {
       setCreating(false);
