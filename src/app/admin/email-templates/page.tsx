@@ -18,6 +18,7 @@ import {
   Clock,
   XCircle,
   Ban,
+  Power,
 } from "lucide-react";
 
 interface TemplateData {
@@ -34,6 +35,7 @@ interface AllTemplates {
   license_reminder: TemplateData;
   license_expired: TemplateData;
   service_suspended: TemplateData;
+  service_reactivated: TemplateData;
 }
 
 type TemplateKey = keyof AllTemplates;
@@ -138,8 +140,19 @@ const TEMPLATE_INFO: TemplateInfo[] = [
   {
     key: "service_suspended",
     name: "Service Suspended",
-    description: "Sent when a CMS instance is manually deactivated by admin.",
+    description: "Sent when a CMS instance is suspended (deactivated by admin).",
     icon: Ban,
+    placeholders: [
+      "{{customerName}}",
+      "{{cmsId}}",
+      "{{domain}}",
+    ],
+  },
+  {
+    key: "service_reactivated",
+    name: "Service Reactivated",
+    description: "Sent when a suspended CMS instance is reactivated by admin.",
+    icon: Power,
     placeholders: [
       "{{customerName}}",
       "{{cmsId}}",

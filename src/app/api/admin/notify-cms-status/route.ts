@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFromRequest } from "@/lib/adminAuth";
-import { sendServiceSuspendedEmail, sendCmsReadyEmail } from "@/lib/cmsEmail";
+import { sendServiceSuspendedEmail, sendServiceReactivatedEmail } from "@/lib/cmsEmail";
 import { prisma } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   const order = await prisma.order.findFirst({
     where: { notes: { contains: cmsId } },
-    select: { customerEmail: true, customerName: true, notes: true },
+    select: { customerEmail: true, customerName: true },
   });
 
   if (!order) {
@@ -31,14 +31,11 @@ export async function POST(req: NextRequest) {
         domain: domain || "dashcore.eu",
       });
     } else if (action === "reactivated") {
-      const match = order.notes?.match(/Admin: (\S+) \/ (\S+)/);
-      await sendCmsReadyEmail({
+      await sendServiceReactivatedEmail({
         email: order.customerEmail,
         name: order.customerName,
         cmsId,
         domain: domain || "dashcore.eu",
-        adminUsername: match?.[1] || "admin",
-        adminPassword: match?.[2] || "(unchanged)",
       });
     }
     return NextResponse.json({ ok: true, sentTo: order.customerEmail });
