@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
     return {
       title: s.metaTitle || "DashCore | IPTV Platform Engine",
-      description: s.metaDescription || "Renew your DashCore IPTV platform engine license.",
+      description: s.metaDescription || "Fully automated IPTV platform engine for livestreaming infrastructure.",
       keywords: s.metaKeywords ? s.metaKeywords.split(",").map((k) => k.trim()) : [],
       icons: s.faviconUrl ? [{ rel: "icon", url: s.faviconUrl }] : [],
       openGraph: {
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
   } catch {
     return {
       title: "DashCore | IPTV Platform Engine",
-      description: "Renew your DashCore IPTV platform engine license.",
+      description: "Fully automated IPTV platform engine for livestreaming infrastructure.",
     };
   }
 }
