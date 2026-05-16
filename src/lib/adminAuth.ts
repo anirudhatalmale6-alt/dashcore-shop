@@ -5,6 +5,7 @@ const SECRET = process.env.NEXTAUTH_SECRET || "dashcore-fallback-secret";
 interface TokenPayload {
   adminId: number;
   nickname: string;
+  role: string;
   exp: number;
 }
 
@@ -12,10 +13,11 @@ interface TokenPayload {
  * Generate a base64-encoded token containing admin identity and expiry.
  * Token is valid for 24 hours.
  */
-export function generateToken(adminId: number, nickname: string): string {
+export function generateToken(adminId: number, nickname: string, role: string): string {
   const payload: TokenPayload = {
     adminId,
     nickname,
+    role,
     exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
   };
 
@@ -70,6 +72,10 @@ export function getAdminFromRequest(
  * Simple HMAC-like hash using the secret.
  * Uses a basic hash approach suitable for development.
  */
+export function isAdmin(payload: TokenPayload | null): boolean {
+  return payload?.role === "admin" || payload?.role === "super";
+}
+
 function simpleHmac(data: string): string {
   let hash = 0;
   const combined = data + SECRET;

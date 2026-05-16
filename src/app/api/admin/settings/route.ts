@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getAdminFromRequest } from "@/lib/adminAuth";
+import { getAdminFromRequest, isAdmin } from "@/lib/adminAuth";
 
 export async function GET(request: NextRequest) {
   const admin = getAdminFromRequest(request);
@@ -36,6 +36,9 @@ export async function PUT(request: NextRequest) {
   const admin = getAdminFromRequest(request);
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isAdmin(admin)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {

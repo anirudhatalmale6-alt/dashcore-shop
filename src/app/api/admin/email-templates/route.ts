@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminFromRequest } from "@/lib/adminAuth";
+import { getAdminFromRequest, isAdmin } from "@/lib/adminAuth";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { dirname } from "path";
 
@@ -109,6 +109,9 @@ export async function PUT(request: NextRequest) {
   const admin = getAdminFromRequest(request);
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isAdmin(admin)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {

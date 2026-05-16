@@ -29,6 +29,7 @@ export default function AdminLoginPage() {
       if (!res.ok) { setError(data.error || "Login failed."); return; }
       localStorage.setItem("dashcore_admin_token", data.token);
       localStorage.setItem("dashcore_admin_nickname", data.nickname);
+      localStorage.setItem("dashcore_admin_role", data.role);
       router.push("/admin/dashboard");
     } catch {
       setError("Network error. Please try again.");

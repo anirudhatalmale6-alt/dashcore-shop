@@ -18,46 +18,57 @@ import {
   Key,
   Server,
   Mail,
+  ShieldCheck,
 } from "lucide-react";
 
-const navItems = [
-  { key: "dashboard", label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { key: "products", label: "Products", href: "/admin/products", icon: Package },
-  { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-  { key: "customers", label: "Customers", href: "/admin/customers", icon: Users },
-  { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare },
-  { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText },
-  { key: "slider", label: "Slider", href: "/admin/slider", icon: Images },
-  { key: "cms-instances", label: "CMS Instances", href: "/admin/cms-instances", icon: Server },
-  { key: "api-keys", label: "API Keys", href: "/admin/api-keys", icon: Key },
-  { key: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
-  { key: "email-templates", label: "Email Templates", href: "/admin/email-templates", icon: Mail },
-  { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
-  { key: "seo", label: "SEO", href: "/admin/seo", icon: Search },
+const allNavItems = [
+  { key: "dashboard", label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, moderator: true },
+  { key: "products", label: "Products", href: "/admin/products", icon: Package, moderator: false },
+  { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart, moderator: true },
+  { key: "customers", label: "Customers", href: "/admin/customers", icon: Users, moderator: true },
+  { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare, moderator: false },
+  { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText, moderator: false },
+  { key: "slider", label: "Slider", href: "/admin/slider", icon: Images, moderator: false },
+  { key: "cms-instances", label: "CMS Instances", href: "/admin/cms-instances", icon: Server, moderator: true },
+  { key: "api-keys", label: "API Keys", href: "/admin/api-keys", icon: Key, moderator: false },
+  { key: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard, moderator: false },
+  { key: "email-templates", label: "Email Templates", href: "/admin/email-templates", icon: Mail, moderator: false },
+  { key: "admin-users", label: "Admin Users", href: "/admin/admin-users", icon: ShieldCheck, moderator: false },
+  { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings, moderator: false },
+  { key: "seo", label: "SEO", href: "/admin/seo", icon: Search, moderator: false },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [nickname, setNickname] = useState("");
+  const [role, setRole] = useState("admin");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("dashcore_admin_token");
     const nick = localStorage.getItem("dashcore_admin_nickname");
+    const r = localStorage.getItem("dashcore_admin_role");
     if (!token) {
       router.push("/admin");
       return;
     }
     setNickname(nick || "Admin");
+    setRole(r || "admin");
     setReady(true);
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("dashcore_admin_token");
     localStorage.removeItem("dashcore_admin_nickname");
+    localStorage.removeItem("dashcore_admin_role");
     router.push("/admin");
   };
+
+  const isModerator = role === "moderator";
+  const navItems = isModerator
+    ? allNavItems.filter((item) => item.moderator)
+    : allNavItems;
 
   if (!ready) {
     return (
@@ -109,6 +120,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="px-3 mb-3">
             <p className="text-xs text-[#94a3b8]">Signed in as</p>
             <p className="text-sm font-medium text-[#0f172a] truncate">{nickname}</p>
+            <span className={`inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+              isModerator
+                ? "bg-amber-100 text-amber-700"
+                : "bg-[#7c3aed]/10 text-[#7c3aed]"
+            }`}>
+              {isModerator ? "Moderator" : "Administrator"}
+            </span>
           </div>
           <button
             onClick={handleLogout}

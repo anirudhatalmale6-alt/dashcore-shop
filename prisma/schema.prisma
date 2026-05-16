@@ -132,6 +132,7 @@ model Order {
 // AdminUser
 // ---------------------------------------------------------------------------
 enum AdminRole {
+  moderator
   admin
   super
 }
